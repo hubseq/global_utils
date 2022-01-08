@@ -53,11 +53,25 @@ GROUP_JSON_VERSION = '20211219'
 VALID_FILETYPES = ['FASTQ', 'BAM', 'SAM', 'BED', 'TXT', 'CSV', 'JSON', 'GZ', 'FASTQ.GZ', 'WIG', 'HTML']
 COMBO_FILETYPES = ['FASTQ.GZ']
 
-def getFullPath(root_folder, files):
+def loadJSON( fname ):
+    """ Loads JSON from file named 'fname' into a JSON object.                                                                                             
+    """
+    try:
+        with open(fname,'r') as f:
+            myjson = json.load(f)
+    except Exception as e:
+        print('JSON ERROR - JSON NOT FORMATTED CORRECTLY OR FILE NOT FOUND: '+str(e))
+        return ''
+    return myjson
+
+
+def getFullPath(root_folder, files, convert2string = False):
     """ Given a root_folder and a file STRING or LIST of files, return the full paths to these file(s).
 
     >>> getFullPath( 's3://mybam', 'hello.bam' )
     's3://mybam/hello.bam'
+    >>> getFullPath( 's3://mybam', ['hello.bam', 'hello2.bam'] )
+    ['s3://mybam/hello.bam', 's3://mybam/hello2.bam']
     
     """
     if type(files) == type([]):
@@ -77,39 +91,147 @@ def getFullPath(root_folder, files):
             full_paths = os.path.join(root_folder, files)
     else:
         full_paths = files
-    return full_paths
 
-
-def downloadFiles( files, root_folder, file_system = 's3', mock = False):
-    """
-    >>> downloadFiles( ['my.bed'], 's3://bed', 's3', True )
-    ['s3://bed/my.bed']
-    """
-    files_fullpath = getFullPath(root_folder, files)
-    if mock == True:
-        return files_fullpath
-    elif file_system.lower() == 'local':
-        return files_fullpath
-    elif file_system.lower() == 's3':
-        return aws_s3_utils.downloadFiles_S3(files_fullpath, files)
+    if convert2string == False or type(full_paths) == type(''):
+        return full_paths
+    elif type(full_paths) == type([]) and full_paths != []:
+        return full_paths[0]
     else:
-        return files_fullpath
+        return full_paths
 
 
-def downloadFolder( folder, root_folder, file_system = 's3', mock = False):
+def copyLocalFiles( local_files, dest_folder ):
+    """ Copies local file(s) to a destination folder.
     """
-    >>> downloadFolder( ['subbed'], 's3://bed', 's3', True )
-    ['s3://bed/subbed']
-    """    
-    folder_fullpath = getFullPath(root_folder, folder)
-    if mock == True:
-        return folder_fullpath
-    elif file_system.lower() == 'local':
-        return folder_fullpath
-    elif file_system.lower() == 's3':
-        return aws_s3_utils.downloadFolder_S3(folder_fullpath, folder)
+    if type(local_files) == type(''):
+        subprocess.check_call(['cp', local_files, dest_folder])
+        return os.path.join(dest_folder, local_files)
+    elif type(local_files) == type([]) and local_files != []:
+        for local_file in local_files:
+            subprocess.check_call(['cp', local_file, dest_folder])
+        return os.path.join(dest_folder, local_files[0])
     else:
-        return folder_fullpath
+        return dest_folder
+
+
+def copyLocalFolder( local_folder, dest_folder ):
+    """ Copies contents of local folder to a destination folder
+    """
+    subprocess.check_call(' '.join(['cp', '-R', local_folder.rstrip('/')+'/*', dest_folder]), shell=True)
+    return dest_folder
+
+    
+def downloadFile( files, dest_folder, file_system = 'local', mock = False):
+    return downloadFiles( files, dest_folder, file_system = 'local', mock = False)
+
+
+def downloadFiles( files, dest_folder, file_system = 'local', mock = False):
+    """
+    >>> downloadFiles( '/bed1/my1.bed', '/data/bed/', 'local', True )
+    Downloading file(s) /bed1/my1.bed to /data/bed/.
+    '/data/bed/my1.bed'
+    
+    >>> downloadFiles( ['/bed1/my.bed'], '/data/bed/', 'local', True )
+    Downloading file(s) ['/bed1/my.bed'] to /data/bed/.
+    ['/data/bed/my.bed']
+    
+    >>> downloadFiles( ['/bedin/my1.bed', '/bedin/my2.bed'], '/data/bed/', 'local', True )
+    Downloading file(s) ['/bedin/my1.bed', '/bedin/my2.bed'] to /data/bed/.
+    ['/data/bed/my1.bed', '/data/bed/my2.bed']
+    
+    >>> downloadFiles( 's3://npipublicinternal/test/fastqtest/dnaseq_test_R1.fastq.gz', '/Users/jerry/icloud/Documents/ngspipelines/global_utils/test/', 's3' )
+    Downloading file(s) s3://npipublicinternal/test/fastqtest/dnaseq_test_R1.fastq.gz to /Users/jerry/icloud/Documents/ngspipelines/global_utils/test/.
+    Downloading from S3 - s3://npipublicinternal/test/fastqtest/dnaseq_test_R1.fastq.gz to /Users/jerry/icloud/Documents/ngspipelines/global_utils/test/
+    '/Users/jerry/icloud/Documents/ngspipelines/global_utils/test/dnaseq_test_R1.fastq.gz'
+    
+    """
+    print('Downloading file(s) {} to {}.'.format(str(files), str(dest_folder)))
+    dest_fullpath = getFullPath(dest_folder, getFileOnly(files))
+    if mock == True:
+        return dest_fullpath
+    elif file_system.lower() == 's3' or 's3:/' in str(files):
+        return aws_s3_utils.downloadFiles_S3(files, dest_folder)
+    elif file_system.lower() == 'local':
+        return copyLocalFiles( files, dest_folder )
+    else:
+        return dest_fullpath
+
+
+def downloadFolder( folder_fullpath, dest_folder, file_system = 'local', mock = False):
+    """
+    >>> downloadFolder( ['s3://bed/subbed'], '/data/bed/', 's3', True )
+    Downloading folder ['s3://bed/subbed'] to /data/bed/.
+    '/data/bed/'
+    
+    >>> downloadFolder( 's3://bed1/subbed', '/data/bed/', 's3', True )
+    Downloading folder s3://bed1/subbed to /data/bed/.
+    '/data/bed/'
+    
+    >>> downloadFolder('s3://npipublicinternal/test/fastqtest/', '/Users/jerry/icloud/Documents/ngspipelines/global_utils/test/', 's3' )
+    Downloading folder s3://npipublicinternal/test/fastqtest/ to /Users/jerry/icloud/Documents/ngspipelines/global_utils/test/.
+    '/Users/jerry/icloud/Documents/ngspipelines/global_utils/test/'
+    """
+    print('Downloading folder {} to {}.'.format(str(folder_fullpath), str(dest_folder)))
+    
+    # if folder input is wrapped in a list
+    if type(folder_fullpath) == type([]) and folder_fullpath != []:
+        folder_fullpath = folder_fullpath[0]
+    
+    # if path to a file is supplied as folder_fullpath, then we want to download all files in the containing folder, and return downloaded file path - this is a special case for bwa mem where we want the FASTA but also want the supporting genome index files.
+    dest_folder_extended = ''
+    if '.' in folder_fullpath.split('/')[-1]:
+        dest_folder_extended = dest_folder.rstrip('/')+'/'+folder_fullpath.split('/')[-1]
+        folder_fullpath =  folder_fullpath[0:folder_fullpath.rfind('/')]+'/'
+    
+    if mock == True:
+        return dest_folder
+    elif file_system.lower() == 's3' or 's3:/' in str(folder_fullpath):
+        aws_s3_utils.downloadFolder_S3(folder_fullpath, dest_folder)
+        return dest_folder_extended if dest_folder_extended != '' else dest_folder
+    elif file_system.lower() == 'local':
+        return copyLocalFolder( folder_fullpath, dest_folder )
+    else:
+        return dest_folder
+    
+
+def uploadFolder( local_folder, remote_folder, file_system = 'local', mock = False):
+    """
+    >>> uploadFolder( '/data/bed', 's3://bed1/', 's3', True )
+    Uploading folder /data/bed to s3://bed1/.
+    's3://bed1/'
+    
+    >>> uploadFolder('/Users/jerry/icloud/Documents/ngspipelines/global_utils/test/', 's3://npipublicinternal/test/fastqout/', 's3')
+    Uploading folder /Users/jerry/icloud/Documents/ngspipelines/global_utils/test/ to s3://npipublicinternal/test/fastqout/.
+    's3://npipublicinternal/test/fastqout/'
+    """
+    print('Uploading folder {} to {}.'.format(str(local_folder), str(remote_folder)))      
+    if mock == True:
+        return remote_folder
+    elif file_system.lower() == 's3' or ('s3:/' in str(remote_folder)):
+        return aws_s3_utils.uploadFolder_S3( local_folder, remote_folder)
+    elif file_system.lower() == 'local':
+        return copyLocalFolder( local_folder, remote_folder )
+    else:
+        return remote_folder
+    
+
+def uploadFiles(localfile, remote_path, file_system = 'local', mock = False):
+    return uploadFile(localfile, remote_path, file_system, mock)
+
+
+def uploadFile(localfile, remote_path, file_system = 'local', mock = False):
+    """ Securely uploads a local file to a path in S3.
+        Full path of localfile should be specified in the input.
+    """
+    print('Uploading file {} to {}.'.format(str(localfile), str(remote_path)))
+    if mock == True:
+        return remote_path
+    elif file_system.lower() == 's3' or ('s3:/' in str(remote_path)):
+        return aws_s3_utils.uploadFiles_S3( localfile, remote_path)
+    elif file_system.lower() == 'local':
+        return copyLocalFiles( localfile, remote_path )
+    else:
+        return remote_path
 
 
 def getRunJSONs( userid, pipelineid, rids):
@@ -272,9 +394,9 @@ def inferFileType( _fn ):
     return: STRING (e.g., TXT)
     """
     if type(_fn) == type(''):
-        return _fn.split('.')[-1] if len(list(filter(lambda combo: _fn.upper() in combo, COMBO_FILETYPES))) == 0 else _fn.split('.')[-2]+'.'+_fn.split('.')[-1]
+        return _fn.split('.')[-1] if len(list(filter(lambda combo: _fn.upper().endswith(combo), COMBO_FILETYPES))) == 0 else _fn.split('.')[-2]+'.'+_fn.split('.')[-1]
     elif type(_fn) == type([]):
-        return _fn[0].split('.')[-1] if len(list(filter(lambda combo: _fn[0].upper() in combo, COMBO_FILETYPES))) == 0 else _fn[0].split('.')[-2]+'.'+_fn[0].split('.')[-1]
+        return _fn[0].split('.')[-1] if len(list(filter(lambda combo: _fn[0].upper().endswith(combo), COMBO_FILETYPES))) == 0 else _fn[0].split('.')[-2]+'.'+_fn[0].split('.')[-1]
     else:
         return ''
 

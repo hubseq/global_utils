@@ -1,7 +1,12 @@
+import os, boto3, subprocess
+
+s3 = boto3.resource('s3')
+
 def downloadFile_S3(s3path, dir_to_download):
     """ Downloads an object from S3 to a local file.
         Returns full file path of downloaded local file.
     """
+    print('Downloading from S3 - {} to {}'.format(s3path, dir_to_download))    
     bucket = s3path.split('/')[2]
     key = '/'.join(s3path.split('/')[3:])
 
@@ -28,15 +33,44 @@ def downloadFiles_S3(s3paths, dir_to_download):
     return local_filenames
 
 
+def uploadFiles_S3(localfiles, s3path):
+    """ Securely uploads a list of files from local to s3.
+        Full path of localfiles should be specified in the input.
+    """
+    if type(localfiles) == type([]):
+        local_filenames = []
+        for localfile in localfiles:
+            uploadFile_S3(localfile, s3path)
+    elif type(localfiles) == type(''):
+        uploadFile_S3(localfiles, s3path)        
+    return s3path
+
+
 def uploadFile_S3(localfile, s3path):
     """ Securely uploads a local file to a path in S3.
         Full path of localfile should be specified in the input.
     """
+    print('Uploading to s3 - {} to {}'.format(str(localfile), str(s3path)))
+    if type(localfile) == type([]) and localfile != []:
+        localfile = localfile[0]
+    
     bucket = s3path.split('/')[2]
     key = os.path.join('/'.join((s3path.rstrip('/')+'/').split('/')[3:-1]),localfile.split('/')[-1])
 
     response = s3.Object(bucket,key).upload_file(localfile, ExtraArgs=dict(ServerSideEncryption='AES256'))
+    return s3path
 
+
+def uploadFolder_S3(localdir, s3path, files2exclude = ''):
+    """ Uploads all files in a folder (and sub-folders) from S3 to a local directory.
+        Automatically use server-side encryption.
+        Returns response.
+    """
+    cmd = ['aws','s3','cp','--recursive','--sse','AES256',localdir.rstrip('/')+'/',s3path.rstrip('/')+'/']
+    if files2exclude != '':
+        for f in files2exclude:
+            cmd += ['--exclude', f]
+    response = subprocess.check_call(cmd)
     return response
 
 
@@ -59,9 +93,9 @@ def uploadFolder_S3(localdir, s3path, files2exclude = ''):
     if files2exclude != '':
         for f in files2exclude:
             cmd += ['--exclude', f]
-    response = subprocess.check_call(cmd)
+    response = subprocess.check_call(cmd)  # 0 if successful
 
-    return response
+    return s3path
 
 
 def downloadFiles_Pattern_S3(s3_path, directory_to_download, pattern):
