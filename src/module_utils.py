@@ -361,11 +361,12 @@ def createModuleInstanceJSON( module_template_json, io_json, file_system = 's3' 
 
 
 def getOutputDirectory( mi_json ):
-    return mi_json['program_output']['output_directory']
+    print('MI JSON: '+str(mi_json))
+    return mi_json['program_output']['output_directory'] if 'output_directory' in mi_json['program_output'] else ''
 
 
 def getOutputFile( mi_json ):
-    return mi_json['program_output']['output']
+    return mi_json['program_output']['output'] if 'output' in mi_json['program_output'] else ''
 
 
 def createProgramArguments( module_instance_json, input_working_dir, output_working_dir, rtype = 'str', mock = False ):
