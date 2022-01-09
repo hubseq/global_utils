@@ -206,9 +206,24 @@ def createIOJSON( run_args_json ):
         elif input_file != [] and input_file != '':
             sid = input_file.split('/')[-1].split('.')[0]            
         return sid
+
+    def formatIOFile( io_file, sid ):
+        # if no file name is specified, use sample ID
+        if '.' in io_file.split('/')[-1]:
+            return io_file
+        else:
+            return os.path.join(io_file, sid+'.'+str(file_utils.inferFileType( io_file )).lower())
     
     io_json = {'input': [], 'output': [], 'alternate_inputs': [], 'alternate_outputs': [], 'program_arguments': '', 'sample_id': ''}
     try:
+        # GET SAMPLE ID FIRST
+        if 'sampleid' in run_args_json:
+            io_json['sample_id'] = run_args_json['sampleid']
+        elif 'sample_id' in run_args_json:
+            io_json['sample_id'] = run_args_json['sample_id']
+        else:
+            io_json['sample_id'] = inferSampleID(run_args_json['input'])
+        
         input_list = run_args_json['input'].split(',')
         input_list_final = []
         for _input in input_list:
@@ -221,18 +236,18 @@ def createIOJSON( run_args_json ):
                     raise IOError
                 input_list_final.append(os.path.join(run_args_json['inputdir'], _input))
         io_json['input'] = input_list_final
-
+        
         output_list = run_args_json['output'].split(',')
         output_list_final = []
         for _output in output_list:
             # output file name contains full path
             if '/' in _output:
-                output_list_final.append(_output)
+                output_list_final.append(formatIOFile(_output, io_json['sample_id']))
             else:
                 if 'outputdir' not in run_args_json:
                     print('ERROR: outputdir needs to be specified.')
                     raise IOError
-                output_list_final.append(os.path.join(run_args_json['outputdir'], _output))
+                output_list_final.append(os.path.join(run_args_json['outputdir'], formatIOFile(_output, io_json['sample_id'])))
         io_json['output'] = output_list_final
         
         alternate_inputs_list = run_args_json['alternate_inputs'].split(',') if 'alternate_inputs' in run_args_json else []
@@ -242,13 +257,7 @@ def createIOJSON( run_args_json ):
         io_json['alternate_outputs'] = alternate_outputs_list
         
         io_json['program_arguments'] = run_args_json['pargs'] if 'pargs' in run_args_json else ''
-        if 'sampleid' in run_args_json:
-            io_json['sample_id'] = run_args_json['sampleid']
-        elif 'sample_id' in run_args_json:
-            io_json['sample_id'] = run_args_json['sample_id']
-        else:
-            io_json['sample_id'] = inferSampleID(run_args_json['input'])
-
+        
         if 'dryrun' in run_args_json:
             io_json['dryrun'] = ''
     
@@ -324,7 +333,7 @@ def createModuleInstanceJSON( module_template_json, io_json, file_system = 's3' 
             mi_json['program_input'] = {'input': file_utils.getFileOnly(io_json['input']),
                                         'input_type': pi['input_type'],
                                         'input_file_type': pi['input_file_type'],
-                                        'input_directory': getDirectory( io_json['input'], io_json['inputdir']) if 'inputdir' in io_json else file_utils.getFileFolder( io_json['input'] ), 
+                                        'input_directory': getDirectory( io_json['input'], io_json['inputdir']) if 'inputdir' in io_json else file_utils.getFileFolder(io_json['input']),
                                         'input_position': pi['input_position'],
                                         'input_prefix': pi['input_prefix']}
     for pi in module_template_json['program_output']:
@@ -332,7 +341,7 @@ def createModuleInstanceJSON( module_template_json, io_json, file_system = 's3' 
             mi_json['program_output'] = {'output': file_utils.getFileOnly(io_json['output']),
                                         'output_type': pi['output_type'],
                                         'output_file_type': pi['output_file_type'],
-                                         'output_directory': getDirectory(io_json['output'], io_json['outputdir']) if 'outputdir' in io_json else file_utils.getFileFolder( io_json['output'] ),
+                                        'output_directory': getDirectory(io_json['output'], io_json['outputdir']) if 'outputdir' in io_json else file_utils.getFileFolder(io_json['output']),
                                         'output_position': pi['output_position'],
                                         'output_prefix': pi['output_prefix']}
     for alt_input in io_json['alternate_inputs']:
