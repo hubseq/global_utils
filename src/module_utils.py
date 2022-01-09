@@ -324,7 +324,7 @@ def createModuleInstanceJSON( module_template_json, io_json, file_system = 's3' 
             mi_json['program_input'] = {'input': file_utils.getFileOnly(io_json['input']),
                                         'input_type': pi['input_type'],
                                         'input_file_type': pi['input_file_type'],
-                                        'input_directory': getDirectory( io_json['input'], io_json['inputdir'] if 'inputdir' in io_json else ''),
+                                        'input_directory': getDirectory( io_json['input'], io_json['inputdir'])
                                         'input_position': pi['input_position'],
                                         'input_prefix': pi['input_prefix']}
     for pi in module_template_json['program_output']:
@@ -332,7 +332,7 @@ def createModuleInstanceJSON( module_template_json, io_json, file_system = 's3' 
             mi_json['program_output'] = {'output': file_utils.getFileOnly(io_json['output']),
                                         'output_type': pi['output_type'],
                                         'output_file_type': pi['output_file_type'],
-                                        'output_directory': getDirectory(io_json['output'], io_json['outputdir'] if 'outputdir' in io_json else ''),
+                                         'output_directory': getDirectory(io_json['output'], io_json['outputdir'])
                                         'output_position': pi['output_position'],
                                         'output_prefix': pi['output_prefix']}
     for alt_input in io_json['alternate_inputs']:
@@ -361,7 +361,6 @@ def createModuleInstanceJSON( module_template_json, io_json, file_system = 's3' 
 
 
 def getOutputDirectory( mi_json ):
-    print('MI JSON: '+str(mi_json))
     return mi_json['program_output']['output_directory'] if 'output_directory' in mi_json['program_output'] else ''
 
 
