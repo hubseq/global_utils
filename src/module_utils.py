@@ -258,8 +258,8 @@ def createIOJSON( run_args_json ):
         
         io_json['program_arguments'] = run_args_json['pargs'] if 'pargs' in run_args_json else ''
         
-        if 'dryrun' in run_args_json:
-            io_json['dryrun'] = ''
+        if ('dryrun' in run_args_json and run_args_json['dryrun'] == ''):
+            io_json['dryrun'] = run_args_json['dryrun'] 
     
     except IOError:
         print('RUN ARGUMENTS NOT SPECIFIED CORRECTLY.')
@@ -363,7 +363,7 @@ def createModuleInstanceJSON( module_template_json, io_json, file_system = 's3' 
                                                     'output_position': pi['output_position'],
                                                     'output_prefix': pi['output_prefix']})
 
-    if 'dryrun' in io_json:
+    if 'dryrun' in io_json and io_json['dryrun'] == '':
         mi_json['dryrun'] = ''
     
     return mi_json
