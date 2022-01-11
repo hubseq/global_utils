@@ -374,6 +374,14 @@ def createModuleInstanceJSON( module_template_json, io_json, file_system = 's3' 
     return mi_json
 
 
+def getInputDirectory( mi_json ):
+    return mi_json['program_input']['input_directory'] if 'input_directory' in mi_json['program_input'] else ''
+
+
+def getInputFile( mi_json ):
+    return mi_json['program_input']['input'] if 'input' in mi_json['program_input'] else ''
+
+
 def getOutputDirectory( mi_json ):
     return mi_json['program_output']['output_directory'] if 'output_directory' in mi_json['program_output'] else ''
 
@@ -499,13 +507,13 @@ def createProgramArguments( module_instance_json, input_working_dir, output_work
     return pargs_string_final
 
 
-def runProgram( pargs, fout_name = ''):
-    """ Given a string of full program arguments (including program name), run the program.
+def executeProgram( pargs, fout_name ):
+    """ Given a string of full program arguments (including program name), execute the program command.
 
     pargs: STRING
     fout_name: file name to output, otherwise empty string
 
-    >>> runProgram('bwa mem -L s3://bed/input2.bed -o s3://align/my.sam -S -t 4 s3://fasta/input1.fasta s3://fastq/my.fastq -dryrun')
+    >>> executeProgram('bwa mem -L s3://bed/input2.bed -o s3://align/my.sam -S -t 4 s3://fasta/input1.fasta s3://fastq/my.fastq -dryrun')
     DRYRUN - NOTHING SUBMITTED: bwa mem -L s3://bed/input2.bed -o s3://align/my.sam -S -t 4 s3://fasta/input1.fasta s3://fastq/my.fastq -dryrun
     ''
     
@@ -520,5 +528,62 @@ def runProgram( pargs, fout_name = ''):
     return fout_name
 
 
-def startProgram( pargs, fout_name ):
-    return runProgram( pargs, fout_name )
+def uploadOutput( local_out, remote_out ):
+    """ Upload data output files
+    """
+    print('Uploading output data files...')
+    file_utils.uploadFolder(local_out, remote_out)
+    return
+
+
+def runProgram( program_arguments, local_output_file ):
+    """ Runs the program specified in program arguments
+    """
+    # run program - this should run program w arguments via command line on local machine / container
+    print('RUNNING PROGRAM...')
+    print('CMD: '+str(program_arguments))
+    executeProgram( program_arguments, local_output_file, True) )
+    return
+
+
+def initProgram( ):
+    """ Entrypoint for initializing program arguments before run.
+    """
+    # parse run input arguments
+    args = module_utils.getRunArgs( )
+    
+    # create a working directory
+    print('Creating working directory')
+    DOCKER_DIR = os.getcwd()
+    WORKING_DIR = generateWorkingDir(args.working_dir)
+    os.chdir(WORKING_DIR)
+    OUT_DIR = os.path.join(WORKING_DIR, 'module_out')
+    os.mkdir(OUT_DIR)
+    
+    # setup I/O
+    print('Setting up I/O')
+    run_arguments_file = file_utils.downloadFile(args.run_arguments, WORKING_DIR)
+    run_arguments_json = file_utils.loadJSON( run_arguments_file )
+    
+    # get module template for this docker module
+    module_template_path = getModuleTemplate( args.module_name )
+    module_template_file = file_utils.downloadFile( module_template_path, WORKING_DIR )
+    module_template_json = file_utils.loadJSON( module_template_file )
+    
+    # parse run arguments and create program arguments to be run via command line
+    module_instance_json = createModuleInstanceJSON( module_template_json, run_arguments_json )
+    print(str(module_instance_json))
+    remote_input_directory = getInputDirectory( module_instance_json )
+    remote_input_file = getInputFile( module_instance_json )    
+    remote_output_directory = getOutputDirectory( module_instance_json )
+    remote_output_file = getOutputFile( module_instance_json )
+    local_input_file = file_utils.getFullPath(WORKING_DIR, remote_input_file, True)
+    local_output_file = file_utils.getFullPath(OUT_DIR, remote_output_file, True)    
+    program_arguments = createProgramArguments( module_instance_json, WORKING_DIR, OUT_DIR )  # files will be downloaded here
+
+    run_json = {'module': args.module_name, 'local_input_dir': WORKING_DIR, 'local_output_dir': OUT_DIR, \
+                'remote_input_dir': remote_input_directory, 'remote_output_dir': remote_output_directory, \
+                'local_input_file': local_input_file, 'local_output_file': local_output_file, \
+                'program_arguments': program_arguments, 'run_arguments': run_arguments_json, \
+                'module_instance_json': module_instance_json}
+    return run_json
