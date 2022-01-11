@@ -392,14 +392,28 @@ def inferFileType( _fn ):
     _fn: filename STRING (e.g., 'myfile.txt') or LIST ['myfile.txt']
 
     return: STRING (e.g., TXT)
+
+    >>> inferFileType( 'blah.fastq' )
+    'fastq'
+    >>> inferFileType( 'blah.fastq.gz' )
+    'fastq.gz'
+    >>> inferFileType( 'a/folder')
+    ''
+    >>> inferFileType( 'a/folder/')
+    ''
+    >>> inferFileType( ['blah1.fastq', 'blah2.fastq'] )
+    'fastq'
+    >>> inferFileType( ['a/folder', 'blah2.fastq'] )
+    ''
     """
-    if type(_fn) == type(''):
+    if type(_fn) == type('') and '.' in _fn:
         return _fn.split('.')[-1] if len(list(filter(lambda combo: _fn.upper().endswith(combo), COMBO_FILETYPES))) == 0 else _fn.split('.')[-2]+'.'+_fn.split('.')[-1]
-    elif type(_fn) == type([]):
+    elif type(_fn) == type([]) and _fn != [] and '.' in _fn[0]:
         return _fn[0].split('.')[-1] if len(list(filter(lambda combo: _fn[0].upper().endswith(combo), COMBO_FILETYPES))) == 0 else _fn[0].split('.')[-2]+'.'+_fn[0].split('.')[-1]
     else:
         return ''
 
+    
 def createSearchFileJSONs( _folder_list, _extensions, _filetype):
     """ Creates a search file query JSON given list of folders to search, file extensions to search for and file type to search for.
     Note that this is intended to search for a single file type (one per JSON).
@@ -600,14 +614,29 @@ def getFileOnly( file_fullpath ):
 
 
 def getFileFolder( file_fullpath ):
-    if type(file_fullpath) == type([]):
-#        folders_only = []
+    """ Gets folder path from a full file path
+    >>> getFileFolder( '/this/is/a/path' )
+    '/this/is/a/path/'
+    >>> getFileFolder( '/this/is/a/path/' )
+    '/this/is/a/path/'
+    >>> getFileFolder( '/this/is/a/path/to.txt' )
+    '/this/is/a/path/'
+    >>> getFileFolder( ['/this/is/a/path/to.txt'] )
+    '/this/is/a/path/'
+    """
+    if type(file_fullpath) == type([]) and file_fullpath != []:
         # get directory of first file
-        folders_only = file_fullpath[0][0:file_fullpath[0].rfind('/')]+'/'
-#        for f in file_fullpath:
-#            folders_only.append(f[0:f.rfind('/')]+'/')
+        if '.' in file_fullpath[0].split('/')[-1]:
+            # if file is specified at end
+            folders_only = file_fullpath[0][0:file_fullpath[0].rfind('/')]+'/'
+        else:
+            # if just folder path is passed
+            folders_only = file_fullpath[0].rstrip('/')+'/'
     elif type(file_fullpath) == type(''):
-        folders_only = file_fullpath[0:file_fullpath.rfind('/')]+'/'
+        if '.' in file_fullpath.split('/')[-1]:
+            folders_only = file_fullpath[0:file_fullpath.rfind('/')]+'/'
+        else:
+            folders_only = file_fullpath.rstrip('/')+'/'
     else:
         folders_only = ''
     return folders_only

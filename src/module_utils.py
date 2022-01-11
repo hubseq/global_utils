@@ -309,6 +309,11 @@ def createModuleInstanceJSON( module_template_json, io_json, file_system = 's3' 
     >>> mi_template_json = {'program_name': 'bwa', 'program_subname': 'mem', 'program_version': '0.7.17', 'program_arguments': '-S -t 4', 'program_input': [{'input_type': 'file', 'input_file_type': 'FASTQ', 'input_position': -1, 'input_prefix': '-i'}, {'input_type': 'file', 'input_file_type': 'FASTQ.GZ', 'input_position': -1, 'input_prefix': '-i'}], 'program_output': [{'output_type': 'file', 'output_file_type': 'SAM', 'output_position': 0, 'output_prefix': '-o'}], 'alternate_inputs': [{'input_type': 'file', 'input_file_type': 'BED', 'input_position': 0, 'input_prefix': '-L'}, {'input_type': 'file', 'input_file_type': 'FASTA', 'input_position': -2, 'input_prefix': ''}], 'alternate_outputs': []}
     >>> createModuleInstanceJSON( mi_template_json, io_json )
     {'program_input': {'input': ['my.fastq'], 'input_type': 'file', 'input_file_type': 'FASTQ', 'input_directory': 's3://fastq/', 'input_position': -1, 'input_prefix': '-i'}, 'program_output': {'output': ['my.sam'], 'output_type': 'file', 'output_file_type': 'SAM', 'output_directory': 's3://align/', 'output_position': 0, 'output_prefix': '-o'}, 'alternate_inputs': [{'input': 'input1.fasta', 'input_type': 'file', 'input_file_type': 'FASTA', 'input_directory': 's3://fasta/', 'input_position': -2, 'input_prefix': ''}, {'input': 'input2.bed', 'input_type': 'file', 'input_file_type': 'BED', 'input_directory': 's3://bed/', 'input_position': 0, 'input_prefix': '-L'}], 'alternate_outputs': [], 'program_name': 'bwa', 'program_subname': 'mem', 'program_version': '0.7.17', 'program_arguments': '-S -t 4', 'sample_id': 'MYSAMPLE', 'dryrun': ''}
+
+    >>> io_json = {'input': ['s3://npipublicinternal/test/bcl/test.samplesheet.csv'], 'output': ['s3://npipublicinternal/test/bcl_out/'], 'alternate_inputs': [], 'alternate_outputs': [], 'program_arguments': '', 'sample_id': 'MYRUN', 'dryrun': ''}
+    >>> mi_template_json = {'program_name': 'bcl2fastq', 'program_subname': '', 'program_version': '2.20.0', 'program_arguments': '-R /home/module_out/', 'program_input': [{'input_type': 'file', 'input_file_type': 'CSV', 'input_position': -1, 'input_prefix': '--sample-sheet'}], 'program_output': [{'output_type': 'folder', 'output_file_type': '', 'output_position': 0, 'output_prefix': '-o'}], 'alternate_inputs': [], 'alternate_outputs': []}
+    >>> createModuleInstanceJSON( mi_template_json, io_json )
+    {'program_input': {'input': ['test.samplesheet.csv'], 'input_type': 'file', 'input_file_type': 'CSV', 'input_directory': 's3://npipublicinternal/test/bcl/', 'input_position': -1, 'input_prefix': '--sample-sheet'}, 'program_output': {'output': [''], 'output_type': 'folder', 'output_file_type': '', 'output_directory': 's3://npipublicinternal/test/bcl_out/', 'output_position': 0, 'output_prefix': '-o'}, 'alternate_inputs': [], 'alternate_outputs': [], 'program_name': 'bcl2fastq', 'program_subname': '', 'program_version': '2.20.0', 'program_arguments': '-R /home/module_out/', 'sample_id': 'MYRUN', 'dryrun': ''}
     
     """
     def getDirectory( input_file, input_dir ):
@@ -350,7 +355,7 @@ def createModuleInstanceJSON( module_template_json, io_json, file_system = 's3' 
                 mi_json['alternate_inputs'].append({'input': file_utils.getFileOnly(alt_input),
                                                     'input_type': pi['input_type'],
                                                     'input_file_type': pi['input_file_type'],
-                                                    'input_directory': file_utils.getFileFolder(alt_input),
+                                                    'input_directory': getDirectory(alt_input['input'], alt_input['inputdir']) if 'inputdir' in alt_input else file_utils.getFileFolder(alt_input),
                                                     'input_position': pi['input_position'],
                                                     'input_prefix': pi['input_prefix']})
     for alt_output in io_json['alternate_outputs']:
@@ -359,7 +364,7 @@ def createModuleInstanceJSON( module_template_json, io_json, file_system = 's3' 
                 mi_json['alternate_outputs'].append({'output': file_utils.getFileOnly(alt_output),
                                                     'output_type': pi['output_type'],
                                                     'output_file_type': pi['output_file_type'],
-                                                    'output_directory': file_utils.getFileFolder(alt_output),
+                                                    'output_directory': getDirectory(alt_output['output'], alt_output['outputdir']) if 'outputdir' in alt_output else file_utils.getFileFolder(alt_output),
                                                     'output_position': pi['output_position'],
                                                     'output_prefix': pi['output_prefix']})
 
@@ -401,6 +406,11 @@ def createProgramArguments( module_instance_json, input_working_dir, output_work
     Downloading file(s) s3://fasta/input1.fasta to /data/input_folder/.
     Downloading file(s) s3://bed/input2.bed to /data/input_folder/.
     'bwa mem -L /data/input_folder/input2.bed -o /data/output_folder/my.sam -S -t 4 /data/input_folder/input1.fasta /data/input_folder/my.fastq -dryrun'
+
+    >>> mi_json = {'program_input': {'input': ['test.samplesheet.csv'], 'input_type': 'file', 'input_file_type': 'CSV', 'input_directory': 's3://npipublicinternal/test/bcl/', 'input_position': -1, 'input_prefix': '--sample-sheet'}, 'program_output': {'output': [''], 'output_type': 'folder', 'output_file_type': '', 'output_directory': 's3://npipublicinternal/test/bcl_out/', 'output_position': 0, 'output_prefix': '-o'}, 'alternate_inputs': [], 'alternate_outputs': [], 'program_name': 'bcl2fastq', 'program_subname': '', 'program_version': '2.20.0', 'program_arguments': '--create-fastq-for-index-reads -R /home/', 'sample_id': 'MYRUN', 'dryrun': ''}
+    >>> createProgramArguments( mi_json, '/home/', '/home/module_out/', 'str', True )
+    Downloading file(s) ['s3://npipublicinternal/test/bcl/test.samplesheet.csv'] to /home/.
+    'bcl2fastq -o /home/module_out/ --create-fastq-for-index-reads -R /home/ --sample-sheet /home/test.samplesheet.csv -dryrun'
     """
     
     def determineInputOutputOrder( mi_json ):
