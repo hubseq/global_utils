@@ -507,7 +507,7 @@ def createProgramArguments( module_instance_json, input_working_dir, output_work
     return pargs_string_final
 
 
-def executeProgram( pargs, fout_name ):
+def executeProgram( pargs, fout_name = '' ):
     """ Given a string of full program arguments (including program name), execute the program command.
 
     pargs: STRING
@@ -542,7 +542,7 @@ def runProgram( program_arguments, local_output_file ):
     # run program - this should run program w arguments via command line on local machine / container
     print('RUNNING PROGRAM...')
     print('CMD: '+str(program_arguments))
-    executeProgram( program_arguments, local_output_file, True) )
+    executeProgram( program_arguments, local_output_file )
     return
 
 
