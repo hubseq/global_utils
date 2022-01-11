@@ -550,7 +550,7 @@ def initProgram( ):
     """ Entrypoint for initializing program arguments before run.
     """
     # parse run input arguments
-    args = module_utils.getRunArgs( )
+    args = getRunArgs( )
     
     # create a working directory
     print('Creating working directory')
