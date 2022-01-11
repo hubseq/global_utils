@@ -512,7 +512,7 @@ def runProgram( pargs, fout_name = ''):
     """
     if '-dryrun' in pargs:
         print('DRYRUN - NOTHING SUBMITTED: '+str(pargs))
-    elif fout_name != '':
+    elif fout_name != '' and '.' in fout_name.split('/')[-1]:
         with open(fout_name,'w') as fout:
             subprocess.check_call(pargs.split(' '), stdout=fout)
     else:
