@@ -564,6 +564,8 @@ def initProgram( ):
     print('Setting up I/O')
     run_arguments_file = file_utils.downloadFile(args.run_arguments, WORKING_DIR)
     run_arguments_json = file_utils.loadJSON( run_arguments_file )
+    run_module_name = run_arguments_json['module_name']
+    run_job_id = str(run_arguments_json['run_arguments']).split('/')[-1].split('.')[1]
     
     # get module template for this docker module
     module_template_path = getModuleTemplate( args.module_name )
@@ -581,9 +583,22 @@ def initProgram( ):
     local_output_file = file_utils.getFullPath(OUT_DIR, remote_output_file, True)    
     program_arguments = createProgramArguments( module_instance_json, WORKING_DIR, OUT_DIR )  # files will be downloaded here
 
-    run_json = {'module': args.module_name, 'local_input_dir': WORKING_DIR, 'local_output_dir': OUT_DIR, \
+    run_json = {'module': run_module_name, 'run_job_id': run_job_id, \
+                'local_input_dir': WORKING_DIR, 'local_output_dir': OUT_DIR, \
                 'remote_input_dir': remote_input_directory, 'remote_output_dir': remote_output_directory, \
                 'local_input_file': local_input_file, 'local_output_file': local_output_file, \
                 'program_arguments': program_arguments, 'run_arguments': run_arguments_json, \
                 'module_instance_json': module_instance_json}
+    
     return run_json
+
+
+def logRun( run_json, output_folder ):
+    """ Log all relevant metadata for this container module run
+    """
+    RUN_LOG_FILE = file_utils.getFullPath(output_folder, '{}.{}.run.log'.format(run_json['module'], run_json['run_job_id']))
+    with open(RUN_LOG_FILE,'w') as fout:
+        json.dump(run_json, fout)
+    return
+
+        
