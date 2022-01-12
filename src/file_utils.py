@@ -117,7 +117,10 @@ def copyLocalFiles( local_files, dest_folder ):
 def copyLocalFolder( local_folder, dest_folder ):
     """ Copies contents of local folder to a destination folder
     """
-    subprocess.check_call(' '.join(['cp', '-R', local_folder.rstrip('/')+'/*', dest_folder]), shell=True)
+    if os.listdir(local_folder) != []:
+        subprocess.check_call(' '.join(['cp', '-R', local_folder.rstrip('/')+'/*', dest_folder]), shell=True)
+    else:
+        print('copyLocalFolder(): local_folder {} is empty - nothing copied.'.format(str(local_folder)))
     return dest_folder
 
     
