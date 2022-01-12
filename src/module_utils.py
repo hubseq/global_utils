@@ -622,7 +622,7 @@ def initProgram( ):
                 'remote_input_dir': remote_input_directory, 'remote_output_dir': remote_output_directory, \
                 'local_input_file': local_input_file, 'local_output_file': local_output_file, \
                 'program_arguments': program_arguments, 'run_arguments': run_arguments_json, \
-                'module_instance_json': module_instance_json, 'job_json': getModuleRunJobFileJSON(run_module_name, run_job_id)}
+                'module_instance_json': module_instance_json, 'job_json': getModuleRunJobFileJSON(run_module_name, run_job_id, WORKING_DIR)}
     
     return run_json
 
