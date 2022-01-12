@@ -564,8 +564,8 @@ def initProgram( ):
     print('Setting up I/O')
     run_arguments_file = file_utils.downloadFile(args.run_arguments, WORKING_DIR)
     run_arguments_json = file_utils.loadJSON( run_arguments_file )
-    run_module_name = run_arguments_json['module_name']
-    run_job_id = str(run_arguments_json['run_arguments']).split('/')[-1].split('.')[1]
+    run_module_name = args.module_name
+    run_job_id = str(args.run_arguments).split('/')[-1].split('.')[1]
     
     # get module template for this docker module
     module_template_path = getModuleTemplate( args.module_name )
