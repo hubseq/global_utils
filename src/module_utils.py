@@ -47,11 +47,11 @@ def getModuleRunIOFilePath( module, job_id ):
 def getModuleRunJobFilePath( module, job_id ):
     return os.path.join( getModuleJobDirectory(module), getModuleRunNameID( module, job_id, 'job_json' ))
 
-def getModuleRunIOFileJSON( module, job_id ):
-    return file_utils.loadJSON( getModuleRunIOFilePath( module, job_id ))
+def getModuleRunIOFileJSON( module, job_id, local_dir ):
+    return file_utils.loadJSON( file_utils.downloadFile( getModuleRunIOFilePath(module, job_id), local_dir ))
 
-def getModuleRunJobFileJSON( module, job_id ):
-    return file_utils.loadJSON( getModuleRunJobFilePath( module, job_id ))
+def getModuleRunJobFileJSON( module, job_id, local_dir ):
+    return file_utils.loadJSON( file_utils.downloadFile( getModuleRunJobFilePath(module, job_id), local_dir ))
 
 def getModuleRunNameID( module, job_id, name_type ):
     """ Returns a unique ID or file name for a given run (job) of a module.

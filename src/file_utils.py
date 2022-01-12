@@ -65,8 +65,17 @@ def getJSON( fname ):
 
 def loadJSON( fname ):
     """ Loads JSON from file named 'fname' into a JSON object and return this object.
+
+    >>> loadJSON( "foo.json" )
+    JSON ERROR - JSON NOT FORMATTED CORRECTLY OR FILE NOT FOUND: [Errno 2] No such file or directory: 'foo.json'
+    {}
+    >>> loadJSON( '../test/test.json' )
+    {'module': 'bwamem'}
     """
     try:
+        if type(fname) == type([]):
+            fname = fname[0] if fname != [] else ''
+        
         with open(fname,'r') as f:
             myjson = json.load(f)
     except Exception as e:
