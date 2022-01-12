@@ -71,7 +71,7 @@ def loadJSON( fname ):
             myjson = json.load(f)
     except Exception as e:
         print('JSON ERROR - JSON NOT FORMATTED CORRECTLY OR FILE NOT FOUND: '+str(e))
-        return ''
+        return {}
     return myjson
 
 
