@@ -53,8 +53,18 @@ GROUP_JSON_VERSION = '20211219'
 VALID_FILETYPES = ['FASTQ', 'BAM', 'SAM', 'BED', 'TXT', 'CSV', 'JSON', 'GZ', 'FASTQ.GZ', 'WIG', 'HTML']
 COMBO_FILETYPES = ['FASTQ.GZ']
 
+def writeJSON( myjson, fout_name ):
+    """ Writes (dumps) a JSON as a string to a file.
+    """
+    with open(fout_name,'w') as fout:
+        json.dump(myjson, fout)
+    return
+
+def getJSON( fname ):
+    return loadJSON(fname)
+
 def loadJSON( fname ):
-    """ Loads JSON from file named 'fname' into a JSON object.                                                                                             
+    """ Loads JSON from file named 'fname' into a JSON object and return this object.
     """
     try:
         with open(fname,'r') as f:
