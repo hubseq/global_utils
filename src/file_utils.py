@@ -4,17 +4,37 @@
 # Utility functions for file I/O. Includes JSON standards for files.
 #
 # file hierarchy:
-# /user_id/pipeline_id/run_id/module_id/file_id/<file_id>...<file_extension>
+# /team_id/user_id/pipeline_id/run_id/sample_id/module_id/<sample_id>...<file_extension>
 #
-# each run creates a /user_id/pipeline_id/run_id/.run.json file that contains all data file information for that run.
-# each pipeline will contain a .pipeline.json that contains information on all runs. /user_id/pipeline_id/.pipeline.json
+# team_id: unique ID for team/lab/group/department - e.g., "ngspipelines-mylab". Alphanumeric and '-'
+# user_id: unique ID for user - e.g., "jchen". Alphanumeric and '_' and '-'
+# pipeline_id: ID for this pipeline - e.g., "dnaseq_targeted"
+# run_id: unique run ID - e.g., "run1_xxxxx" where xxxx are the first 5 alphanumeric of the run ID.
+# sample_id: a sample ID that labels a single dataset or an analysis of multiple datasets, provided by user upon run/job submission.
+# module_id: module name - e.g., bwamem
+#
+# For pipeline runs, a file can be used to submit jobs with the following structure:
+# 1) bwamem --sample_id <> --input ...
+# 2)
+# 3/1,2)  - job 3 depends on 1 and 2...
+#
+# Each run creates a <FULL_RUN_ID>.run.log file that contains a JSON with information on all the individual jobs, as follows:
+# {"run": {"run_id": <FULL_RUN_ID>, "pipeline_id": <FULL_PIPELINE_ID>, "pipeline_version": <VERSION>,
+#          "jobs": [{"id": 1, "job_id": <FULL_JOB_ID>, "module_name": "bwamem", "sample_id": <SAMPLE_ID>, "cmd": "bwamem --sample_id...", "dependent_ids": []},
+#                   {"id": 2, "job_id": <FULL_JOB_ID>, "module_name": "mpileup", "sample_id": <SAMPLE_ID>, "cmd": "mpileup --sample_id...", "dependent_ids": [1]},
+#                    ...]
+# }}
+# This .run.log file is located in /team_id/user_id/pipeline_id/runlogs/
+#
+# Individual job logs will be output to /team_id/user_id/pipeline_id/run_id/sample_id/module_id/<JOB_ID>.job.log
+# These job logs will be parsed to extract and output sample file information and job metadata.
 #
 # SEARCH FOR A SINGLE SAMPLE:
 # data_file_search_json:
 # ['file_location'] = <FOLDER>
 # ['file_extensions'] = <LIST OF EXTENSIONS OR PREFIXES TO SEARCH> - extension has ^.bam or ^myfile_ or ^I1^. Found file must match all extensions.
 # ['file_type'] = <STRING> - file type to search for. ONLY A SINGLE FILE TYPE
-
+#
 # PROCESSING OF A SINGLE SAMPLE:
 # data_file_json:
     # ['user_id'] = STRING <USER_ID>
@@ -75,7 +95,7 @@ def loadJSON( fname ):
     try:
         if type(fname) == type([]):
             fname = fname[0] if fname != [] else ''
-        
+
         with open(fname,'r') as f:
             myjson = json.load(f)
     except Exception as e:
@@ -91,7 +111,7 @@ def getFullPath(root_folder, files, convert2string = False):
     's3://mybam/hello.bam'
     >>> getFullPath( 's3://mybam', ['hello.bam', 'hello2.bam'] )
     ['s3://mybam/hello.bam', 's3://mybam/hello2.bam']
-    
+
     """
     if type(files) == type([]):
         full_paths = []
@@ -142,7 +162,7 @@ def copyLocalFolder( local_folder, dest_folder ):
         print('copyLocalFolder(): local_folder {} is empty - nothing copied.'.format(str(local_folder)))
     return dest_folder
 
-    
+
 def downloadFile( files, dest_folder, file_system = 'local', mock = False):
     return downloadFiles( files, dest_folder, file_system = 'local', mock = False)
 
@@ -152,20 +172,20 @@ def downloadFiles( files, dest_folder, file_system = 'local', mock = False):
     >>> downloadFiles( '/bed1/my1.bed', '/data/bed/', 'local', True )
     Downloading file(s) /bed1/my1.bed to /data/bed/.
     '/data/bed/my1.bed'
-    
+
     >>> downloadFiles( ['/bed1/my.bed'], '/data/bed/', 'local', True )
     Downloading file(s) ['/bed1/my.bed'] to /data/bed/.
     ['/data/bed/my.bed']
-    
+
     >>> downloadFiles( ['/bedin/my1.bed', '/bedin/my2.bed'], '/data/bed/', 'local', True )
     Downloading file(s) ['/bedin/my1.bed', '/bedin/my2.bed'] to /data/bed/.
     ['/data/bed/my1.bed', '/data/bed/my2.bed']
-    
+
     >>> downloadFiles( 's3://npipublicinternal/test/fastqtest/dnaseq_test_R1.fastq.gz', '/Users/jerry/icloud/Documents/ngspipelines/global_utils/test/', 's3' )
     Downloading file(s) s3://npipublicinternal/test/fastqtest/dnaseq_test_R1.fastq.gz to /Users/jerry/icloud/Documents/ngspipelines/global_utils/test/.
     Downloading from S3 - s3://npipublicinternal/test/fastqtest/dnaseq_test_R1.fastq.gz to /Users/jerry/icloud/Documents/ngspipelines/global_utils/test/
     '/Users/jerry/icloud/Documents/ngspipelines/global_utils/test/dnaseq_test_R1.fastq.gz'
-    
+
     """
     print('Downloading file(s) {} to {}.'.format(str(files), str(dest_folder)))
     dest_fullpath = getFullPath(dest_folder, getFileOnly(files))
@@ -184,27 +204,27 @@ def downloadFolder( folder_fullpath, dest_folder, file_system = 'local', mock = 
     >>> downloadFolder( ['s3://bed/subbed'], '/data/bed/', 's3', True )
     Downloading folder ['s3://bed/subbed'] to /data/bed/.
     '/data/bed/'
-    
+
     >>> downloadFolder( 's3://bed1/subbed', '/data/bed/', 's3', True )
     Downloading folder s3://bed1/subbed to /data/bed/.
     '/data/bed/'
-    
+
     >>> downloadFolder('s3://npipublicinternal/test/fastqtest/', '/Users/jerry/icloud/Documents/ngspipelines/global_utils/test/', 's3' )
     Downloading folder s3://npipublicinternal/test/fastqtest/ to /Users/jerry/icloud/Documents/ngspipelines/global_utils/test/.
     '/Users/jerry/icloud/Documents/ngspipelines/global_utils/test/'
     """
     print('Downloading folder {} to {}.'.format(str(folder_fullpath), str(dest_folder)))
-    
+
     # if folder input is wrapped in a list
     if type(folder_fullpath) == type([]) and folder_fullpath != []:
         folder_fullpath = folder_fullpath[0]
-    
+
     # if path to a file is supplied as folder_fullpath, then we want to download all files in the containing folder, and return downloaded file path - this is a special case for bwa mem where we want the FASTA but also want the supporting genome index files.
     dest_folder_extended = ''
     if '.' in folder_fullpath.split('/')[-1]:
         dest_folder_extended = dest_folder.rstrip('/')+'/'+folder_fullpath.split('/')[-1]
         folder_fullpath =  folder_fullpath[0:folder_fullpath.rfind('/')]+'/'
-    
+
     if mock == True:
         return dest_folder
     elif file_system.lower() == 's3' or 's3:/' in str(folder_fullpath):
@@ -214,19 +234,19 @@ def downloadFolder( folder_fullpath, dest_folder, file_system = 'local', mock = 
         return copyLocalFolder( folder_fullpath, dest_folder )
     else:
         return dest_folder
-    
+
 
 def uploadFolder( local_folder, remote_folder, file_system = 'local', mock = False):
     """
     >>> uploadFolder( '/data/bed', 's3://bed1/', 's3', True )
     Uploading folder /data/bed to s3://bed1/.
     's3://bed1/'
-    
+
     >>> uploadFolder('/Users/jerry/icloud/Documents/ngspipelines/global_utils/test/', 's3://npipublicinternal/test/fastqout/', 's3')
     Uploading folder /Users/jerry/icloud/Documents/ngspipelines/global_utils/test/ to s3://npipublicinternal/test/fastqout/.
     's3://npipublicinternal/test/fastqout/'
     """
-    print('Uploading folder {} to {}.'.format(str(local_folder), str(remote_folder)))      
+    print('Uploading folder {} to {}.'.format(str(local_folder), str(remote_folder)))
     if mock == True:
         return remote_folder
     elif file_system.lower() == 's3' or ('s3:/' in str(remote_folder)):
@@ -235,7 +255,7 @@ def uploadFolder( local_folder, remote_folder, file_system = 'local', mock = Fal
         return copyLocalFolder( local_folder, remote_folder )
     else:
         return remote_folder
-    
+
 
 def uploadFiles(localfile, remote_path, file_system = 'local', mock = False):
     return uploadFile(localfile, remote_path, file_system, mock)
@@ -435,7 +455,7 @@ def inferFileType( _fn ):
     else:
         return ''
 
-    
+
 def createSearchFileJSONs( _folder_list, _extensions, _filetype):
     """ Creates a search file query JSON given list of folders to search, file extensions to search for and file type to search for.
     Note that this is intended to search for a single file type (one per JSON).

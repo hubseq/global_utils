@@ -630,7 +630,7 @@ def initProgram( ):
 def logRun( run_json, output_folder ):
     """ Log all relevant metadata for this container module run
     """
-    RUN_LOG_FILE = file_utils.getFullPath(output_folder, '{}.{}.run.log'.format(run_json['module'], run_json['run_job_id']))
+    RUN_LOG_FILE = file_utils.getFullPath(output_folder, '{}.{}.job.log'.format(run_json['module'], run_json['run_job_id']))
     with open(RUN_LOG_FILE,'w') as fout:
         json.dump(run_json, fout)
     return
