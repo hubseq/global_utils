@@ -51,7 +51,10 @@ def getModuleRunIOFileJSON( module, job_id, local_dir ):
     return file_utils.loadJSON( file_utils.downloadFile( getModuleRunIOFilePath(module, job_id), local_dir ))
 
 def getModuleRunJobFileJSON( module, job_id, local_dir ):
-    return file_utils.loadJSON( file_utils.downloadFile( getModuleRunJobFilePath(module, job_id), local_dir ))
+    if '_test' not in job_id:
+        return file_utils.loadJSON( file_utils.downloadFile( getModuleRunJobFilePath(module, job_id), local_dir ))
+    else:
+        return {}
 
 def getModuleRunNameID( module, job_id, name_type ):
     """ Returns a unique ID or file name for a given run (job) of a module.
