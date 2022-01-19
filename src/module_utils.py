@@ -157,6 +157,12 @@ def insertArgument(arg_list, arg, pos):
     >>> c = 2
     >>> insertArgument(a, b, c)
     [1, 2, ['a', 'b'], 3, 4, 5]
+
+    >>> a = [1, 2, 3]
+    >>> b = ['-i', ['R1.fastq.gz', 'R2.fastq.gz']]
+    >>> c = -1
+    >>> insertArgument(a, b, c)
+    [1, 2, 3, ['-i', ['R1.fastq.gz', 'R2.fastq.gz']]]
     """
     if arg == '' or arg == []:
         pass

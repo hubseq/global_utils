@@ -111,7 +111,7 @@ def getFullPath(root_folder, files, convert2string = False):
     's3://mybam/hello.bam'
     >>> getFullPath( 's3://mybam', ['hello.bam', 'hello2.bam'] )
     ['s3://mybam/hello.bam', 's3://mybam/hello2.bam']
-
+    
     """
     if type(files) == type([]):
         full_paths = []
@@ -144,11 +144,11 @@ def copyLocalFiles( local_files, dest_folder ):
     """
     if type(local_files) == type(''):
         subprocess.check_call(['cp', local_files, dest_folder])
-        return os.path.join(dest_folder, local_files)
+        return getFullPath(dest_folder, local_files)
     elif type(local_files) == type([]) and local_files != []:
         for local_file in local_files:
             subprocess.check_call(['cp', local_file, dest_folder])
-        return os.path.join(dest_folder, local_files[0])
+        return getFullPath(dest_folder, local_files)
     else:
         return dest_folder
 
@@ -180,12 +180,18 @@ def downloadFiles( files, dest_folder, file_system = 'local', mock = False):
     >>> downloadFiles( ['/bedin/my1.bed', '/bedin/my2.bed'], '/data/bed/', 'local', True )
     Downloading file(s) ['/bedin/my1.bed', '/bedin/my2.bed'] to /data/bed/.
     ['/data/bed/my1.bed', '/data/bed/my2.bed']
-
-    >>> downloadFiles( 's3://npipublicinternal/test/fastqtest/dnaseq_test_R1.fastq.gz', '/Users/jerry/icloud/Documents/ngspipelines/global_utils/test/', 's3' )
-    Downloading file(s) s3://npipublicinternal/test/fastqtest/dnaseq_test_R1.fastq.gz to /Users/jerry/icloud/Documents/ngspipelines/global_utils/test/.
-    Downloading from S3 - s3://npipublicinternal/test/fastqtest/dnaseq_test_R1.fastq.gz to /Users/jerry/icloud/Documents/ngspipelines/global_utils/test/
+    
+    >>> downloadFiles( 's3://npipublicinternal/test/fastq/dnaseq_test_R1.fastq.gz', '/Users/jerry/icloud/Documents/ngspipelines/global_utils/test/', 's3' )
+    Downloading file(s) s3://npipublicinternal/test/fastq/dnaseq_test_R1.fastq.gz to /Users/jerry/icloud/Documents/ngspipelines/global_utils/test/.
+    Downloading from S3 - s3://npipublicinternal/test/fastq/dnaseq_test_R1.fastq.gz to /Users/jerry/icloud/Documents/ngspipelines/global_utils/test/
     '/Users/jerry/icloud/Documents/ngspipelines/global_utils/test/dnaseq_test_R1.fastq.gz'
 
+    >>> downloadFiles( ['s3://npipublicinternal/test/fastq/dnaseq_test_R1.fastq.gz', 's3://npipublicinternal/test/fastq/dnaseq_test_R2.fastq.gz'], '/Users/jerry/icloud/Documents/ngspipelines/global_utils/test/', 's3' )
+    Downloading file(s) ['s3://npipublicinternal/test/fastq/dnaseq_test_R1.fastq.gz', 's3://npipublicinternal/test/fastq/dnaseq_test_R2.fastq.gz'] to /Users/jerry/icloud/Documents/ngspipelines/global_utils/test/.
+    Downloading from S3 - s3://npipublicinternal/test/fastq/dnaseq_test_R1.fastq.gz to /Users/jerry/icloud/Documents/ngspipelines/global_utils/test/
+    Downloading from S3 - s3://npipublicinternal/test/fastq/dnaseq_test_R2.fastq.gz to /Users/jerry/icloud/Documents/ngspipelines/global_utils/test/
+    ['/Users/jerry/icloud/Documents/ngspipelines/global_utils/test/dnaseq_test_R1.fastq.gz', '/Users/jerry/icloud/Documents/ngspipelines/global_utils/test/dnaseq_test_R2.fastq.gz']
+    
     """
     print('Downloading file(s) {} to {}.'.format(str(files), str(dest_folder)))
     dest_fullpath = getFullPath(dest_folder, getFileOnly(files))
