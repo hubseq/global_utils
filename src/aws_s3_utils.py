@@ -6,6 +6,9 @@ def _findMatches(f, patterns, matchAll = False):
     """ Wrapper for _findMatch to search for multiple patterns. If matchAll is True, must match all patterns.
     """
     matches = []
+    if type(patterns) == str:
+        patterns = [patterns] if patterns != '' else []
+    
     for p in patterns:
         matches.append(_findMatch(f, p))
     if matchAll == False:
@@ -208,7 +211,7 @@ def listSubFiles(s3_path, patterns2include, patterns2exclude):
         with open(uid+'_dfilestmptmp.tmp','r') as f:
             for r in f:
                 rp = r.split(' ')[-1].lstrip(' \t').rstrip(' \t\n')
-                if _findMatches(rp, patterns2include) and not (pattern2exclude != [] and _findMatches(rp, patterns2exclude)):
+                if _findMatches(rp, patterns2include) and not (patterns2exclude != [] and _findMatches(rp, patterns2exclude)):
                     dfiles.append(rp)
         
         # remove temporary file
