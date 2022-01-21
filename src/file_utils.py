@@ -372,7 +372,7 @@ def getRunFileIds( root_folder, teamid, userid, pipelineid, runids):
     fileids = []
     runids_ordered = []
     for runid in runids:
-        _run_fileids = getSubFolders( os.path.join(root_folder, teamid, userid, pipelineid), runids )
+        _run_fileids = getSubFolders( os.path.join(root_folder, teamid, userid, pipelineid, runid) )
         for fid in fileids:
             runids_ordered.append(runid)
         fileids += _run_fileids
