@@ -368,12 +368,13 @@ def getRunFileIds( root_folder, teamid, userid, pipelineid, runids):
     return: LIST of file IDs, LIST of associated run IDs (ordered)
     
     FUTURE: check for existence of folders (in case user deletes).
+    samples cannot be named "fastq" for now.
     """
     fileids = []
     runids_ordered = []
     for runid in runids:
-        _run_fileids = getSubFolders( os.path.join(root_folder, teamid, userid, pipelineid, runid) )
-        for fid in fileids:
+        _run_fileids = getSubFolders( os.path.join(root_folder, teamid, userid, pipelineid, runid), [], ['fastq'] )
+        for fid in _run_fileids:
             runids_ordered.append(runid)
         fileids += _run_fileids
     return (fileids, runids)
