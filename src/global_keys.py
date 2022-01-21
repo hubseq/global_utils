@@ -1,6 +1,7 @@
 
 USER_ID = 'jerry' # just make global for now
 
+KEY_TEAM_ID = 'team_id'
 KEY_USER_ID = 'user_id'
 KEY_PIPELINE_ID = 'pipeline_id'
 KEY_RUN_ID = 'run_id'

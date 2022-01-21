@@ -1,6 +1,53 @@
-import os, boto3, subprocess
+import os, boto3, subprocess, uuid
 
 s3 = boto3.resource('s3')
+
+def _findMatches(f, patterns, matchAll = False):
+    """ Wrapper for _findMatch to search for multiple patterns. If matchAll is True, must match all patterns.
+    """
+    matches = []
+    for p in patterns:
+        matches.append(_findMatch(f, p))
+    if matchAll == False:
+        if True in matches:
+            return True
+        else:
+            return False
+    elif matchAll == True:
+        if False in matches:
+            return False
+        else:
+            return True
+
+
+def _findMatch(f, p):
+    """ function for searching for a pattern match for a file f.
+    """
+    _isMatch = False
+    if type(p) == str:
+        p = [p]
+    # file extension at end of filename
+    if p == [] or p == ['']:
+        _isMatch = True
+    elif p[0]=='^':
+        if f.endswith(p[1:]):
+            _isMatch = True
+    # prefix - file extension at beginning of filename
+    elif p[-1]=='^':
+        if f.startswith(p[0:-1]):
+            _isMatch = True
+    # search pattern somewhere in file extension, separated from base file name by one of [_,-,.]
+    elif p.rfind('^') > p.find('^'):
+        i = p.find('^')
+        j = p.rfind('^')
+        if (f[f.find('_'):].find(p[i+1:j]) >= 0) or (f[f.find('.'):].find(p[i+1:j]) >= 0) or (f[f.find('-'):].find(p[i+1:j]) >= 0):
+            _isMatch = True
+    # search pattern anywhere in file name
+    else:
+        if f.find(p) >= 0:
+            _isMatch = True
+    return _isMatch
+    
 
 def downloadFile_S3(s3path, dir_to_download):
     """ Downloads an object from S3 to a local file.
@@ -128,36 +175,76 @@ def downloadFiles_Pattern_S3(s3_path, directory_to_download, pattern):
 #    return dfiles
 
 
-def listFiles(s3_path, pattern):
+def listSubFiles(s3_path, patterns2include, patterns2exclude):
     """
     Lists files from S3 that match a specific pattern
     :param s3_path: s3 folder path
-    :param pattern: file pattern to search for (e.g., '*.fastq.gz')
+    :param patterns2include: LIST of file patterns to search for.
+    :param patterns2exclude: LIST of file patterns to exclude.
     :return: found files matching pattern
+
+    patterns follow this notation: e.g., ['^.bam', 'hepg2^', 'I1'] where
+                 '^.bam' => file ends with BAM
+                 'hepg2^' => file begins with hepg2
+                 '^R1^' => file contains R1 in file extension (sep from base file name by one of [_,-,.]: e.g., myfile_R1.fastq.gz
+                 'I1' => file contains the word I1 anywhere
     """
-    patterns = pattern.split('*')
+    if type(patterns2include) == str:
+        patterns2include = [patterns2include]
+    if type(patterns2exclude) == str:
+        patterns2exclude = [patterns2exclude]
+        
     cmd = 'aws s3 ls %s' % (s3_path)
     dfiles = []
-
+    uid = str(uuid.uuid4())[0:6]  # prevents race conditions on tmp file
+    
     # output of S3 copy to temporary file
     try:
-        fout = open('dfilestmptmp.tmp','w')
+        fout = open(uid+'_dfilestmptmp.tmp','w')
         subprocess.check_call(cmd.split(' '), stdout=fout)
         fout.close()
 
         # get a list of all downloaded files
-        with open('dfilestmptmp.tmp','r') as f:
+        with open(uid+'_dfilestmptmp.tmp','r') as f:
             for r in f:
-                isFound = True
-                for p in patterns:
-                    if p not in r:
-                        isFound = False
-                if isFound == True:
-                    dfiles.append(str(r.rstrip(' \t\n').split(' ')[-1]))
-
+                rp = r.split(' ')[-1].lstrip(' \t').rstrip(' \t\n')
+                if _findMatches(rp, patterns2include) and not (pattern2exclude != [] and _findMatches(rp, patterns2exclude)):
+                    dfiles.append(rp)
+        
         # remove temporary file
-        rm_command = ['rm','dfilestmptmp.tmp']
+        rm_command = ['rm',uid+'_dfilestmptmp.tmp']
         subprocess.check_call(rm_command)
     except subprocess.CalledProcessError:
         return []
     return dfiles
+
+
+def listSubFolders(s3_path, folders2include = [], folders2exclude = []):
+    """ Lists all immediate subfolders under a given S3 path.
+    :param s3_path: s3 folder path
+    :param folders2include: LIST, if specified, only include these folders
+    :param folders2exclude: LIST of folders to exclude
+    :return: found subfolders
+    """    
+    cmd = 'aws s3 ls %s' % (s3_path.rstrip('/')+'/')
+    dfolders = []
+    uid = str(uuid.uuid4())[0:6]  # prevents race conditions on tmp file
+    try:
+        fout = open(uid+'_dfolderstmptmp.tmp','w')
+        subprocess.check_call(cmd.split(' '), stdout=fout)
+        fout.close()
+        
+        with open(uid+'_dfolderstmptmp.tmp','r') as f:
+            for r in f:
+                rp = r.lstrip(' \t').rstrip(' \t\n')
+                if rp.startswith('PRE'):  # tags a folder - hopefully this doesn't change on AWS side with aws s3 ls
+                    folder = rp.split(' ')[1].rstrip('/')
+                    if (folder not in folders2exclude) and (folders2include == [] or folder in folders2include):
+                        dfolders.append(folder)
+
+        # remove temporary file
+        rm_command = ['rm',uid+'_dfolderstmptmp.tmp']
+        subprocess.check_call(rm_command)
+        return dfolders
+    except subprocess.CalledProcessError:
+        return []

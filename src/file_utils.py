@@ -6,13 +6,13 @@
 # file hierarchy:
 # /team_id/user_id/pipeline_id/run_id/sample_id/module_id/<sample_id>...<file_extension>
 #
-# team_id: unique ID for team/lab/group/department - e.g., "ngspipelines-mylab". Alphanumeric and '-'
-# user_id: unique ID for user - e.g., "jchen". Alphanumeric and '_' and '-'
+# team_id:     unique ID for team/lab/group/department - e.g., "ngspipelines-mylab". Alphanumeric and '-'
+# user_id:     unique ID for user - e.g., "jchen". Alphanumeric and '_' and '-'
 # pipeline_id: ID for this pipeline - e.g., "dnaseq_targeted"
-# run_id: unique run ID - e.g., "run1_xxxxx" where xxxx are the first 5 alphanumeric of the run ID.
-# sample_id: a sample ID that labels a single dataset or an analysis of multiple datasets, provided by user upon run/job submission.
-# module_id: module name - e.g., bwamem
-#
+# run_id:      unique run ID - e.g., "run1_xxxxx" where xxxx are first 5 alphanumeric of the run ID.
+# sample_id:   sample ID that labels a single dataset or an analysis of multiple datasets, provided by user upon run/job submission.
+# module_id:   module name - e.g., bwamem
+# 
 # For pipeline runs, a file can be used to submit jobs with the following structure:
 # 1) bwamem --sample_id <> --input ...
 # 2)
@@ -20,15 +20,15 @@
 #
 # Each run creates a <FULL_RUN_ID>.run.log file that contains a JSON with information on all the individual jobs, as follows:
 # {"run": {"run_id": <FULL_RUN_ID>, "pipeline_id": <FULL_PIPELINE_ID>, "pipeline_version": <VERSION>,
-#          "jobs": [{"id": 1, "job_id": <FULL_JOB_ID>, "module_name": "bwamem", "sample_id": <SAMPLE_ID>, "cmd": "bwamem --sample_id...", "dependent_ids": []},
-#                   {"id": 2, "job_id": <FULL_JOB_ID>, "module_name": "mpileup", "sample_id": <SAMPLE_ID>, "cmd": "mpileup --sample_id...", "dependent_ids": [1]},
+#          "jobs": [{"id": 1, "job_id": <FULL_JOB_ID>, "module_name": "bwamem", "sample_id": <SID>, "cmd": "bwamem --sample_id...", "dependent_ids": []},
+#                   {"id": 2, "job_id": <FULL_JOB_ID>, "module_name": "mpileup", "sample_id": <SID>, "cmd": "mpileup --sample_id...", "dependent_ids": [1]},
 #                    ...]
 # }}
 # This .run.log file is located in /team_id/user_id/pipeline_id/runlogs/
-#
+# 
 # Individual job logs will be output to /team_id/user_id/pipeline_id/run_id/sample_id/module_id/<JOB_ID>.job.log
 # These job logs will be parsed to extract and output sample file information and job metadata.
-#
+# 
 # SEARCH FOR A SINGLE SAMPLE:
 # data_file_search_json:
 # ['file_location'] = <FOLDER>
@@ -139,16 +139,23 @@ def getFullPath(root_folder, files, convert2string = False):
         return full_paths
 
 
-def copyLocalFiles( local_files, dest_folder ):
+def copyLocalFiles( local_files, dest_folder, linkonly = False ):
     """ Copies local file(s) to a destination folder.
+    If linkonly is True, only set up a symbolic link.
     """
     if type(local_files) == type(''):
-        subprocess.check_call(['cp', local_files, dest_folder])
-        return getFullPath(dest_folder, local_files)
+        if linkonly == False:
+            subprocess.check_call(['cp', local_files, dest_folder])
+        else: # linkonly = True
+            subprocess.check_call(['ln','-s',local_files, os.path.join(dest_folder, getFileOnly(local_files))])
+        return getFullPath(dest_folder, getFileOnly(local_files))
     elif type(local_files) == type([]) and local_files != []:
         for local_file in local_files:
-            subprocess.check_call(['cp', local_file, dest_folder])
-        return getFullPath(dest_folder, local_files)
+            if linkonly == False:
+                subprocess.check_call(['cp', local_file, dest_folder])
+            else: # linkonly = True
+                subprocess.check_call(['ln','-s',local_file, os.path.join(dest_folder, getFileOnly(local_file))])
+        return getFullPath(dest_folder, getFileOnly(local_files))
     else:
         return dest_folder
 
@@ -163,12 +170,15 @@ def copyLocalFolder( local_folder, dest_folder ):
     return dest_folder
 
 
-def downloadFile( files, dest_folder, file_system = 'local', mock = False):
+def downloadFile( files, dest_folder, file_system = 'local', mock = False, linkonly = False):
     return downloadFiles( files, dest_folder, file_system = 'local', mock = False)
 
 
-def downloadFiles( files, dest_folder, file_system = 'local', mock = False):
+def downloadFiles( files, dest_folder, file_system = 'local', mock = False, linkonly = False):
     """
+    mock: do a mock run - don't download anything
+    linkonly: if possible, set up a symbolic link only
+    
     >>> downloadFiles( '/bed1/my1.bed', '/data/bed/', 'local', True )
     Downloading file(s) /bed1/my1.bed to /data/bed/.
     '/data/bed/my1.bed'
@@ -200,7 +210,7 @@ def downloadFiles( files, dest_folder, file_system = 'local', mock = False):
     elif file_system.lower() == 's3' or 's3:/' in str(files):
         return aws_s3_utils.downloadFiles_S3(files, dest_folder)
     elif file_system.lower() == 'local':
-        return copyLocalFiles( files, dest_folder )
+        return copyLocalFiles( files, dest_folder, linkonly )
     else:
         return dest_fullpath
 
@@ -327,7 +337,7 @@ def getRunJSON_sampleOutputFolders( run_json, moduleids = [], sampleids = []):
     """ For a given run, get all sample output folder paths.
     Can subset and only get folders for a subset of modules.
     Can also get a subset of sample output folders by passing a sampleids list.
-
+    
     run_json: {'pipeline_run_metadata': {'fastqc': {'samples': {'sample_id': {'output_folder': '...', 'input_folder': '...'}}}
     """
     sample_output_folders = []
@@ -348,65 +358,201 @@ def getPipelineJSON_RunIds( pipeline_json ):
     return pj['run_ids']
 
 
-def getRunFileIds( userid, pipelineid, runids):
+def getRunFileIds( root_folder, teamid, userid, pipelineid, runids):
     """ Get all existing file IDs for a given set of runs from a pipeline.
 
+    teamid: STRING
     userid: STRING
     pipelineid: STRING
     runids: LIST of run IDs
     return: LIST of file IDs
-
+    
     FUTURE: check for existence of folders (in case user deletes).
     """
-    fileids = []
-    for rid in runids:
-        run_json = getRunJSON( userid, pipelineid, rid)
-        fileids = fileids + getRunJSON_FileIds( run_json )
+    fileids = getSubFolders( os.path.join(root_folder, teamid, userid, pipelineid, runids) )
     return fileids
 
 
-def getRunSampleOutputFolders( userid, pipelineid, runids, moduleids = [], sampleids = []):
-    """ Get all sample output folders for a given set of runs from a pipeline.
-    Can subset and only get a subset of modules.
-    Can also get a subset of sample output folders by passing a sampleids list.
+def getDataFiles( data_folders, extensions2include = [], extensions2exclude = [] ):
+    """ Gets data files in the selected data folders that match extensions2include and DO NOT match extensions2exclude.
+    
+    data_folders: LIST of data folders to search. Can be local or on S3.
+    extensions2include: LIST of extension patterns to search for. If empty, then get all files.
+    extensions2exclude: LIST of extension patterns to exclude. If empty, then do not exclude any files.
+    return: LIST of data files, LIST of sample IDs (file IDs) for those data files
+
+    >>> getDataFiles([])
+    ([], [])
+
     """
+    data_files = []
+    sample_ids = []
+    if type(data_folders) == str:
+        data_folders = [data_folders]
+        
+    for data_folder in data_folders:
+        data_files_new = getSubFiles( data_folder, extensions2include, extensions2exclude )
+        data_files = data_files + data_files_new
+        for i in range(0,len(data_files_new)):
+            sample_ids.append( getFileIdFromLocation(data_folder) )
+    return (data_files, sample_ids)
+
+
+def getSubFiles( root_folder, patterns2include = [], patterns2exclude = [] ):
+    """ For a given root folder, get all files (NOT directories) in that folder. Do not include files in subfolders.
+
+    root_folder: STRING folder to search. Can be local or on S3.
+    patterns2include: LIST of file patterns to include. Include all if empty.
+    patterns2exclude: LIST of file patterns to exclude. Exclude none if empty. 
+    return: FULL PATH of all found files
+    
+    patterns follow this notation: e.g., ['.bam^', '^hepg2', 'I1'] where
+                 '^.bam' => file ends with BAM
+                 'hepg2^' => file begins with hepg2
+                 '^R1^' => file contains R1 in file extension (sep from base file name by one of [_,-,.]: e.g., myfile_R1.fastq.gz
+                 'I1' => file contains the word I1 anywhere
+    """
+    def listSubFilesLocal( root_folder, patterns2include = [], patterns2exclude = [] ):
+        try:
+            rfiles = []
+            subfiles = os.listdir(root_folder)
+            for subfile in subfiles:
+                if not os.path.isdir(subfile):
+                    if (patterns2include != [] and aws_s3_utils._findMatches(subfile, patterns2include)) and \
+                       (patterns2exclude != [] and not aws_s3_utils._findMatches(subfile, patterns2exclude)):
+                        rfiles.append(subfile)
+            return rfiles
+        except FileNotFoundError:
+            return []
+
+    if type(patterns2include) == str:
+        patterns2include = [patterns2include]
+    if type(patterns2exclude) == str:
+        patterns2exclude = [patterns2exclude]
+
+    if root_folder.lstrip(' \t').startswith('s3://'):
+        return getFullPath( root_folder, aws_s3_utils.listSubFiles( root_folder, patterns2include, patterns2exclude ))
+    elif root_folder.lstrip(' \t').startswith('/') or root_folder.lstrip(' \t').startswith('~/'):
+        return getFullPath( listSubFilesLocal( root_folder, patterns2include, patterns2exclude ))
+    else:
+        return []
+
+    
+def getSubFolders( root_folder, sub_folders = [], folders2exclude = [] ):
+    """ For a given root folder, get all listed subfolders, excluding any mentioned folders.
+    This currently works for local or S3 paths.
+    
+    root_folder: STRING (PATH)
+    sub_folders: LIST of subfolders to get (empty list = get all sub_folders)
+    folders2exclude: LIST of subfolders to exclude
+    
+    >>> import os
+    >>> cwd = os.getcwd()
+    >>> getSubFolders( cwd, [], ['__pycache__'] )
+    ['temp']
+    """
+    def listSubFoldersLocal( root_folder, folders2include = [], folders2exclude = [] ):
+        try:
+            rdirs = []
+            subdirs = os.listdir(root_folder)
+            for subdir in subdirs:
+                if os.path.isdir(subdir) and ((subdir not in folders2exclude) and (folders2include == [] or subdir in folders2include)):
+                    rdirs.append(subdir)
+            return rdirs
+        except FileNotFoundError:
+            return []
+
+    # in case inputs are strings - convert to single item lists
+    if type(sub_folders) == str:
+        sub_folders = [sub_folders]
+    if type(folders2exclude) == str:
+        folders2exclude = [folders2exclude]
+        
+    if root_folder.lstrip(' \t').startswith('s3://'):
+        return aws_s3_utils.listSubFolders( root_folder, sub_folders, folders2exclude )
+    elif root_folder.lstrip(' \t').startswith('/') or root_folder.lstrip(' \t').startswith('~/'):
+        return listSubFoldersLocal( root_folder, sub_folders, folders2exclude )
+    else:
+        return []
+
+
+def getRunSampleOutputFolders( root_folder, teamid, userids = [], pipelineids = [], runids = [], sampleids = [], moduleids = []):
+    """ Get all sample output folders for a given set of users, pipelines, runs, modules, or samples.
+    Note that this is flexible in getting ALL folders or a subset of folders within a team root directory.
+    This function assumes the hierarchy for sample folders as:
+    /teamid/userid/pipelineid/runid/moduleid/sampleid/<SAMPLE-DATA-FILES>
+
+    root_folder: STRING - root folder for all team folders. Usually 's3://' (for S3) or '/' (for root local)
+
+    >>> getRunSampleOutputFolders( 's3://', 'npipublicinternal', ['test'], ['dnaseq_targeted'], ['run_test1'], ['dnaseq_test'], ['bwamem', 'mpileup'])
+    ['s3://npipublicinternal/test/dnaseq_targeted/run_test1/dnaseq_test/bwamem', 's3://npipublicinternal/test/dnaseq_targeted/run_test1/dnaseq_test/mpileup']
+    
+    """
+    # There are many nested for-loops to allow flexibility, but number of folders should be small enough, should be ok.    
     output_folders = []
-    for rid in runids:
-        run_json = getRunJSON( userid, pipelineid, rid)
-        output_folders = output_folders + getRunJSON_sampleOutputFolders( run_json, moduleids, sampleids)
+    # if userids is empty list, then this gets all userids
+    userids = getSubFolders( os.path.join(root_folder, teamid), userids)
+    for userid in userids:
+        # if pipelineids is empty list, then this gets all pipeline ids
+        pipelineids = getSubFolders( os.path.join(root_folder, teamid, userid), pipelineids )
+        for pipeid in pipelineids:
+            # if runids is empty list, then this gets all run ids
+            runids = getSubFolders( os.path.join(root_folder, teamid, userid, pipeid), runids )
+            for rid in runids:
+                # if sampleids is empty list, then this gets all sample ids
+                sampleids = getSubFolders( os.path.join(root_folder, teamid, userid, pipeid, rid), sampleids )
+                for sid in sampleids:
+                    # if moduleids is empty list, then this gets all module ids
+                    moduleids = getSubFolders( os.path.join(root_folder, teamid, userid, pipeid, rid, sid), moduleids )
+                    for moduleid in moduleids:
+                        output_folders.append( os.path.join(root_folder, teamid, userid, pipeid, rid, sid, moduleid))
     return output_folders
 
 
-def getRunIds( userid, pipelineid):
+def getRunIds( root_folder, teamid, userid, pipelineid):
     """ Get all existing run IDs for a given set of runs for a pipeline.
-
+    
+    teamid: STRING
     userid: STRING
     pipelineid: STRING
     return: LIST of run IDs
-
-    FUTURE: check for existence of runs (in case user deletes).
+    
+    FUTURE: check for existence of runs (in case user deletes) and excluded folders.
     """
-    runids = []
-    pipeline_json = getPipelineJSON( userid, pipelineid)
-    return getPipelineJSON_RunIds( pipeline_json )
+    runids = getSubFolders( os.path.join(root_folder, teamid, userid, pipelineid) )
+    return runids
+
+    # pipeline_json = getPipelineJSON( userid, pipelineid)
+    # return getPipelineJSON_RunIds( pipeline_json )
 
 
 # file hierarchy:
-# /user_id/run_id/file_id/module_id/<file_id>...<file_extension>
+# /team_id/user_id/run_id/file_id/module_id/<file_id>...<file_extension>
+def getSubPath(file_folder, loc):
+    if file_folder.startswith('s3://'):
+        return file_folder[4:].split('/')[loc] if len(file_folder[4:].split('/')) > loc else ''
+    elif file_folder.startswith('/') or file_folder.startswith('~/'):
+        return file_folder.split('/')[loc] if len(file_folder.split('/')) > loc else ''
+    else:
+        return file_folder.split('/')[loc-1] if len(file_folder.split('/')) > loc - 1 else ''
+    
+def getTeamIdFromLocation(file_folder):
+    return getSubPath(file_folder, 1)
+
 def getUserIdFromLocation(file_folder):
-    return file_folder.split('/')[1]
+    return getSubPath(file_folder, 2)
 
 def getPipelineIdFromLocation(file_folder):
-    return file_folder.split('/')[2]
+    return getSubPath(file_folder, 3)    
 
 def getRunIdFromLocation(file_folder):
-    return file_folder.split('/')[3]
-
-def getModuleIdFromLocation(file_folder):
-    return file_folder.split('/')[4]
+    return getSubPath(file_folder, 4)    
 
 def getFileIdFromLocation(file_folder):
-    return file_folder.split('/')[5]
+    return getSubPath(file_folder, 5)    
+
+def getModuleIdFromLocation(file_folder):
+    return getSubPath(file_folder, 6)    
 
 
 def listFiles( _dir, _file_system = 'local' ):
@@ -465,7 +611,7 @@ def inferFileType( _fn ):
 def createSearchFileJSONs( _folder_list, _extensions, _filetype):
     """ Creates a search file query JSON given list of folders to search, file extensions to search for and file type to search for.
     Note that this is intended to search for a single file type (one per JSON).
-
+    
     return: LIST of search JSONs
     """
     search_jsons = []
@@ -485,22 +631,24 @@ def createSearchFileJSON( _folder, _extensions, _filetype):
             global_keys.KEY_FILE_TYPE: str(_filetype).upper()}
 
 
-def createDataFileJSON( _filename, _filefolder, _filetype = '',  _file_id = '', _user_id = '', _pipeline_id = '', _run_id = '', _module_id = ''):
+def createDataFileJSON( _filename, _filefolder, _filetype = '',  _file_id = '', _team_id = '', _user_id = '', _pipeline_id = '', _run_id = '', _module_id = ''):
     """ Creates a data file JSON from input file information.
 
     _filename: filename STRING (e.g., 'myfile.fastq') (REQUIRED)
     _filefolder: file folder / location STRING (e.g., '/myfolder/bwamem/') (REQUIRED)
     _filetype: file type (e.g., BAM) (optional but prefered)
+    _team_id: unique team id (e.g., chenlab) (optional but prefered - can infer from filefolder if necessary)
     _user_id: unique user id (e.g., jerrychen) (optional but prefered - can infer from filefolder if necessary)
     _run_id: run / job id with format <user_id>_<yyyymmddhhmmss> (e.g., jerrychen_20211219221055)
     _module_id: module name (e.g., bwa)
     _file_id: file ID - usually sample ID, which is derived from run input file name (e.g., encode-hepg2) (optional)
-
+    
     return: JSON with the key-value pairs defined for data files
     """
     _module_id_local = _module_id if _module_id != '' else getModuleIdFromLocation(_filefolder)
 
-    return {global_keys.KEY_USER_ID: _user_id if _user_id != '' else getUserIdFromLocation(_filefolder),
+    return {global_keys.KEY_TEAM_ID: _team_id if _team_id != '' else getTeamIdFromLocation(_filefolder),
+            global_keys.KEY_USER_ID: _user_id if _user_id != '' else getUserIdFromLocation(_filefolder),
             global_keys.KEY_PIPELINE_ID: _pipeline_id if _pipeline_id != '' else getPipelineIdFromLocation(_filefolder),
             global_keys.KEY_RUN_ID: _run_id if _run_id != '' else getRunIdFromLocation(_filefolder),
             global_keys.KEY_FILE_ID: _file_id if _file_id != '' else getFileIdFromLocation(_filefolder),
@@ -548,14 +696,14 @@ def getDataFileName( _datafilejson, fullpath = False ):
 
 def searchDataFile( _folder, _extensions, _file_system = 'local' ):
     """ Given a folder to search, searches and returns data files matching the input extensions.
-
+    
     _folder:     STRING e.g., '/myfolder/subfolder/'
     _extensions: LIST e.g., ['.bam^', '^hepg2', 'I1'] where
                  '^.bam' => file ends with BAM
                  'hepg2^' => file begins with hepg2
                  'I1' => file contains the word I1
 
-    return: LIST of data file JSONs
+    return: LIST of data files in folder that match extension patterns searched for
     """
     # local function for searching for a pattern match
     def _findMatch(f, p):
@@ -579,7 +727,7 @@ def searchDataFile( _folder, _extensions, _file_system = 'local' ):
             if f.find(p) >= 0:
                 _isMatch = True
         return _isMatch
-
+    
     # main search through all files in the directory
     all_files = listFiles( _folder, _file_system)
     matched_files = []
@@ -591,16 +739,14 @@ def searchDataFile( _folder, _extensions, _file_system = 'local' ):
     return matched_files
 
 
-def getDataFiles( _sample_file_search_json_list, _file_system = 'local' ):
+def getDataFilesJSON( _sample_file_search_json_list, _file_system = 'local' ):
     """ Given a list of JSON file search queries, function searches and returns found data files (as JSON).
-    See repo > global_utils > file_utils.py for JSON specifications for file search queries and data files.
-
+    See repo > global_utils > src > file_utils.py for JSON specifications for file search queries and data files.
+    
     _sample_file_search_json_list: LIST(JSON) - list of search query JSONs
-
+    
     return: LIST(JSON) - list of data file JSONs
 
-    >>> getDataFiles([])
-    []
     """
     _sample_file_json_list = []
     try:
