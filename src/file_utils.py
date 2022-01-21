@@ -365,12 +365,18 @@ def getRunFileIds( root_folder, teamid, userid, pipelineid, runids):
     userid: STRING
     pipelineid: STRING
     runids: LIST of run IDs
-    return: LIST of file IDs
+    return: LIST of file IDs, LIST of associated run IDs (ordered)
     
     FUTURE: check for existence of folders (in case user deletes).
     """
-    fileids = getSubFolders( os.path.join(root_folder, teamid, userid, pipelineid, runids) )
-    return fileids
+    fileids = []
+    runids_ordered = []
+    for runid in runids:
+        _run_fileids = getSubFolders( os.path.join(root_folder, teamid, userid, pipelineid), runids )
+        for fid in fileids:
+            runids_ordered.append(runid)
+        fileids += _run_fileids
+    return (fileids, runids)
 
 
 def getDataFiles( data_folders, extensions2include = [], extensions2exclude = [] ):
