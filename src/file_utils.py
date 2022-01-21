@@ -392,6 +392,7 @@ def getDataFiles( data_folders, extensions2include = [], extensions2exclude = []
     ([], [])
 
     """
+    print('IN GETDATAFILES(). DATA_FOLDERS: {}, EXTNSIONS2INCLUDE: {}, EXTENSIONS2EXCLUDE: {}'.format(str(data_folders), str(extensions2include), str(extensions2exclude)))
     data_files = []
     sample_ids = []
     if type(data_folders) == str:
@@ -438,6 +439,7 @@ def getSubFiles( root_folder, patterns2include = [], patterns2exclude = [] ):
         patterns2exclude = [patterns2exclude]
 
     if root_folder.lstrip(' \t').startswith('s3://'):
+        print('FILES FOUND ON S3: {}'.format(str(aws_s3_utils.listSubFiles( root_folder, patterns2include, patterns2exclude ))))
         return getFullPath( root_folder, aws_s3_utils.listSubFiles( root_folder, patterns2include, patterns2exclude ))
     elif root_folder.lstrip(' \t').startswith('/') or root_folder.lstrip(' \t').startswith('~/'):
         return getFullPath( listSubFilesLocal( root_folder, patterns2include, patterns2exclude ))

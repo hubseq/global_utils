@@ -26,12 +26,12 @@ def _findMatches(f, patterns, matchAll = False):
 def _findMatch(f, p):
     """ function for searching for a pattern match for a file f.
     """
-    print('FINDMATCH: file {}, pattern {}'.format(str(f), str(p)))
+    # print('FINDMATCH: file {}, pattern {}'.format(str(f), str(p)))
     _isMatch = False
-    if type(p) == str:
-        p = [p]
+    f = str(f).lower()
+    p = str(p).lower()
     # file extension at end of filename
-    if p == [] or p == ['']:
+    if p == '[]' or p == "['']":
         _isMatch = True
     elif p[0]=='^':
         if f.endswith(p[1:]):
@@ -198,10 +198,10 @@ def listSubFiles(s3_path, patterns2include, patterns2exclude):
     if type(patterns2exclude) == str:
         patterns2exclude = [patterns2exclude]
         
-    cmd = 'aws s3 ls %s' % (s3_path)
+    cmd = 'aws s3 ls %s' % (s3_path.lstrip('/')+'/')
     dfiles = []
     uid = str(uuid.uuid4())[0:6]  # prevents race conditions on tmp file
-    
+
     # output of S3 copy to temporary file
     try:
         fout = open(uid+'_dfilestmptmp.tmp','w')
@@ -212,7 +212,8 @@ def listSubFiles(s3_path, patterns2include, patterns2exclude):
         with open(uid+'_dfilestmptmp.tmp','r') as f:
             for r in f:
                 rp = r.split(' ')[-1].lstrip(' \t').rstrip(' \t\n')
-                if _findMatches(rp, patterns2include) and not (patterns2exclude != [] and _findMatches(rp, patterns2exclude)):
+                # '.' indicates its a file
+                if '.' in rp and _findMatches(rp, patterns2include) and not (patterns2exclude != [] and _findMatches(rp, patterns2exclude)):
                     dfiles.append(rp)
         
         # remove temporary file
