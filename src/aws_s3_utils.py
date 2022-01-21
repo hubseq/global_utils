@@ -26,6 +26,7 @@ def _findMatches(f, patterns, matchAll = False):
 def _findMatch(f, p):
     """ function for searching for a pattern match for a file f.
     """
+    print('FINDMATCH: file {}, pattern {}'.format(str(f), str(p)))
     _isMatch = False
     if type(p) == str:
         p = [p]
