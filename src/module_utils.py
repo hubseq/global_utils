@@ -75,6 +75,7 @@ def getModuleRunNameID( module, job_id, name_type ):
 def getModuleTemplateLocation( which_module ):
     return getModuleTemplate( which_module )
 
+
 def getModuleTemplate( which_module ):
     """ Returns the template module JSON file path for input docker module
     """
@@ -89,6 +90,73 @@ def downloadModuleTemplate( which_module, dest_folder ):
     return module_template_path
     
 
+def getModuleTemplateInputFileTypes( template_file ):
+    """ Given the path to a downloaded module template file, get a list of the possible input file types.
+    """
+    module_template_json = file_utils.loadJSON(template_file)
+    input_file_types = []
+    for pi in module_template_json['program_input']:
+        if 'input_file_type' in pi:
+            input_file_types.append(str(pi['input_file_type']).lower())
+    return input_file_types
+
+
+def getModuleTemplateOutputFileTypes( template_file ):
+    """ Given the path to a downloaded module template file, get a list of the possible output file types.
+    """
+    module_template_json = file_utils.loadJSON(template_file)
+    output_file_types = []
+    for pi in module_template_json['program_output']:
+        if 'output_file_type' in pi:
+            output_file_types.append(str(pi['output_file_type']).lower())
+    return output_file_types
+
+
+def getModuleTemplateAltInputFileTypes( template_file ):
+    """ Given the path to a downloaded module template file, get a list of the possible alternate input file types.
+    """
+    module_template_json = file_utils.loadJSON(template_file)
+    alt_input_file_types = []
+    for pi in module_template_json['alternate_inputs']:
+        if 'input_file_type' in pi:        
+            alt_input_file_types.append(str(pi['input_file_type']).lower())
+    return alt_input_file_types
+
+
+def getModuleTemplateAltOutputFileTypes( template_file ):
+    """ Given the path to a downloaded module template file, get a list of the possible alternate output file types.
+    """
+    module_template_json = file_utils.loadJSON(template_file)
+    alt_output_file_types = []
+    for pi in module_template_json['alternate_outputs']:
+        if 'output_file_type' in pi:    
+            alt_output_file_types.append(str(pi['output_file_type']).lower())
+    return alt_output_file_types
+
+def getModuleTemplateDefaults( template_file ):
+    """ Given the path to a downloaded module template file, get a list of default arguments.
+    """
+    module_template_json = file_utils.loadJSON(template_file)
+    defaults = module_template_json['defaults'] if 'defaults' in module_template_json else {}
+    return defaults
+
+def getModuleTemplateDefaultOutput( template_file ):
+    defaults = getModuleTemplateDefaults( template_file )
+    return defaults['output_file']
+
+def getModuleTemplateDefaultAltInputs( template_file ):
+    defaults = getModuleTemplateDefaults( template_file )
+    out = defaults['alternate_inputs'] if 'alternate_inputs' in defaults else ''
+    if type(out) == type([]):
+        out = ','.join(out)
+    return out
+
+def getModuleTemplateDefaultAltOutputs( template_file ):
+    defaults = getModuleTemplateDefaults( template_file )
+    out = defaults['alternate_outputs'] if 'alternate_outputs' in defaults else ''
+    if type(out) == type([]):
+        out = ','.join(out)
+    return out
 
 def getModule_vcpus( module_json ):
     return module_json['compute']['vcpus']

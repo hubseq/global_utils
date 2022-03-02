@@ -8,6 +8,10 @@ def _findMatches(f, patterns, matchAll = False):
     matches = []
     if type(patterns) == str:
         patterns = [patterns] if patterns != '' else []
+
+    # if patterns is empty, we return True by default
+    if patterns == []:
+        return True
     
     for p in patterns:
         matches.append(_findMatch(f, p))
@@ -25,6 +29,8 @@ def _findMatches(f, patterns, matchAll = False):
 
 def _findMatch(f, p):
     """ function for searching for a pattern match for a file f.
+    >>> _findMatch('hello.fastq','^fastq')
+    True
     """
     # print('FINDMATCH: file {}, pattern {}'.format(str(f), str(p)))
     _isMatch = False
@@ -198,7 +204,7 @@ def listSubFiles(s3_path, patterns2include, patterns2exclude):
     if type(patterns2exclude) == str:
         patterns2exclude = [patterns2exclude]
         
-    cmd = 'aws s3 ls %s' % (s3_path.lstrip('/')+'/')
+    cmd = 'aws s3 ls %s' % (s3_path.rstrip('/')+'/')
     dfiles = []
     uid = str(uuid.uuid4())[0:6]  # prevents race conditions on tmp file
 
@@ -220,6 +226,7 @@ def listSubFiles(s3_path, patterns2include, patterns2exclude):
         rm_command = ['rm',uid+'_dfilestmptmp.tmp']
         subprocess.check_call(rm_command)
     except subprocess.CalledProcessError:
+        print('CALLED PROCESS ERROR in aws_s3_utils.listSubFiles()')
         return []
     return dfiles
 

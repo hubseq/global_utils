@@ -130,7 +130,8 @@ def getFullPath(root_folder, files, convert2string = False):
     's3://mybam/hello.bam'
     >>> getFullPath( 's3://mybam', ['hello.bam', 'hello2.bam'] )
     ['s3://mybam/hello.bam', 's3://mybam/hello2.bam']
-
+    >>> getFullPath( 's3://mybam/', [''] )
+    ['s3://mybam/']
     """
     if type(files) == type([]):
         full_paths = []
@@ -396,7 +397,7 @@ def getRunFileIds( root_folder, teamid, userid, pipelineid, runids):
         for fid in _run_fileids:
             runids_ordered.append(runid)
         fileids += _run_fileids
-    return (fileids, runids)
+    return (fileids, runids_ordered)
 
 
 def getDataFiles( data_folders, extensions2include = [], extensions2exclude = [] ):
@@ -537,6 +538,17 @@ def getSubFolders( root_folder, sub_folders = [], folders2exclude = [] ):
         return []
 
 
+def createSampleFilePath( root_folder, teamid, userid, pipelineid, runid, sampleid, moduleid ):
+    """ Create a base file path for a given sample.
+    Assumes hierarchy of sample folders within a pipeline run as:
+     /teamid/userid/pipelineid/runid/moduleid/sampleid/<SAMPLE-DATA-FILES>
+   
+    root_folder: STRING - root folder for all team folders. Usually 's3://' (for S3) or '/' (for root local)
+    """
+    fpath = os.path.join( root_folder, teamid, userid, pipelineid, runid,  moduleid, sampleid )
+    return fpath.rstrip('/')+'/'
+
+
 def getRunSampleOutputFolders( root_folder, teamid, userids = [], pipelineids = [], runids = [], sampleids = [], moduleids = []):
     """ Get all sample output folders for a given set of users, pipelines, runs, modules, or samples.
     Note that this is flexible in getting ALL folders or a subset of folders within a team root directory.
@@ -587,9 +599,57 @@ def getRunIds( root_folder, teamid, userid, pipelineid):
     # return getPipelineJSON_RunIds( pipeline_json )
 
 
+def groupInputFilesBySample( input_files_list ):
+    """ Groups all input files according to the full path and sample ID embedded in the names of the input files.
+    Input can also be directories with the following syntax:
+      /dir/*  gets all files in a dir
+      /dir/^fastq  gets all files that end with FASTQ
+      /dir/sample^  gets all files that start with sample
+    """
+    # getSubFiles( root_folder, patterns2include = [], patterns2exclude = [] ):
+    groups = {}
+    print('INPUT FILES LIST: '+str(input_files_list))
+    for input_file in input_files_list:
+        # if we are looking within a whole directory
+        if '*' in input_file or '^' in input_file:
+            # get files that match the pattern we are looking for
+            if '*' in input_file:
+                files = getSubFiles( input_file.rstrip('*') )
+            elif '^' in input_file:
+                files = getSubFiles( input_file[0:input_file.rfind('/')], [input_file[input_file.rfind('/')+1:]])
+            print('SUBFILES: '+str(files))
+            # group those files
+            for f in files:
+                sampleid = inferSampleID( getFileOnly(f) )
+                groups[sampleid] = groups[sampleid] + [f] if sampleid in groups else [f]
+        # otherwise we have a list of individual files
+        else:
+            sampleid = inferSampleID( getFileOnly(input_file) )
+            groups[sampleid] = groups[sampleid] + [input_file] if sampleid in groups else [input_file]
+    print('GROUPS: '+str(groups))
+    return groups
+
+
+def getSampleIDfromFASTQ( f ):
+    text2search = ['_L001','_L002','_L003','_L004','_R1','_R2','_I1','_I2']
+    for t in text2search:
+        if f.rfind(t) > -1:
+            return f[0:f.rfind(t)]
+
+def inferSampleID( file_name ):
+    """ Given a sample file name, infer the sample ID. This won't be perfect but should work 99% of time.
+    """
+    f = file_name.split('.')[0]
+    if 'fastq' in file_name:
+        sampleid = getSampleIDfromFASTQ( f )
+    else:
+        sampleid = f
+    return sampleid
+
 # file hierarchy:
 # /team_id/user_id/run_id/file_id/module_id/<file_id>...<file_extension>
 def getSubPath(file_folder, loc):
+    # print('SUBPATH FOR: '+str(file_folder))
     if file_folder.startswith('s3://'):
         return file_folder[4:].split('/')[loc] if len(file_folder[4:].split('/')) > loc else ''
     elif file_folder.startswith('/') or file_folder.startswith('~/'):
@@ -610,10 +670,44 @@ def getRunIdFromLocation(file_folder):
     return getSubPath(file_folder, 4)
 
 def getFileIdFromLocation(file_folder):
-    return getSubPath(file_folder, 5)
+    return getSubPath(file_folder, 6)
 
 def getModuleIdFromLocation(file_folder):
+    return getSubPath(file_folder, 5)
+
+def getSampleIdFromLocation(file_folder):
     return getSubPath(file_folder, 6)
+
+
+def getRunBaseFolder( file_fullpath ):
+    """ 
+    >>> getRunBaseFolder( '/teamid/userid/pipelineid/runid/sampleid/moduleid/sample.txt' )
+    '/teamid/userid/pipelineid/runid/'
+    """
+    p = os.path.join(getTeamIdFromLocation(file_fullpath), \
+                     getUserIdFromLocation(file_fullpath), \
+                     getPipelineIdFromLocation(file_fullpath), \
+                     getRunIdFromLocation(file_fullpath))
+    fs = getFileSystem(file_fullpath)
+    return fs + p.lstrip('/').rstrip('/')+'/'
+
+def getSampleBaseFolder( file_fullpath ):
+    """ 
+    >>> getSampleBaseFolder( '/teamid/userid/pipelineid/runid/sampleid/moduleid/sample.txt' )
+    '/teamid/userid/pipelineid/runid/sampleid/'
+    """
+    base = getRunBaseFolder( file_fullpath )
+    p = getSampleIdFromLocation(file_fullpath)
+    return base + p.lstrip('/').rstrip('/')+'/'
+
+def getModuleBaseFolder( file_fullpath ):
+    """ 
+    >>> getModuleBaseFolder( '/teamid/userid/pipelineid/runid/sampleid/moduleid/sample.txt' )
+    '/teamid/userid/pipelineid/runid/sampleid/moduleid/'
+    """
+    base = getSampleBaseFolder( file_fullpath )
+    p = getModuleIdFromLocation(file_fullpath)
+    return base + p.lstrip('/').rstrip('/')+'/'
 
 
 def listFiles( _dir, _file_system = 'local' ):
@@ -669,7 +763,30 @@ def inferFileType( _fn ):
         return ''
 
 
+def getFileSystem( file_fullpath ):
+    """ Gets the file system s3:// or / or gs://
+    """
+    fs = '/'
+    if type(file_fullpath) == type([]) and file_fullpath != []:
+        if file_fullpath[0].startswith('s3:'):
+            fs = 's3://'
+        else:
+            fs = '/'
+    elif type(file_fullpath) == type(''):
+        if file_fullpath.startswith('s3:'):
+            fs = 's3://'
+        else:
+            fs = '/'
+    else:
+        fs = '/'
+    return fs
+
+
 def getFileOnly( file_fullpath ):
+    """ Gets the file only from a full file path
+    >>> getFileOnly( '/this/is/a/path/to.txt' )
+    'to.txt'
+    """
     if type(file_fullpath) == type([]):
         files_only = []
         for f in file_fullpath:
