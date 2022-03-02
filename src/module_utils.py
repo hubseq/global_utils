@@ -447,7 +447,7 @@ def createModuleInstanceJSON( module_template_json, io_json, file_system = 's3' 
     mi_json['program_subname'] = module_template_json['program_subname']
     mi_json['program_version'] = module_template_json['program_version']
     mi_json['module_version'] = module_template_json['module_version']    
-    mi_json['program_arguments'] = io_json['program_arguments'] if io_json['program_arguments'] != '' else module_template_json['program_arguments']
+    mi_json['program_arguments'] = io_json['program_arguments'] if io_json['program_arguments'] not in ['', None] else module_template_json['program_arguments']
     mi_json['options'] = io_json['options'] if ('options' in io_json and io_json['options'] != '') \
                                             else (module_template_json['options'] if ('options' in module_template_json) else '')
     mi_json['sample_id'] = io_json['sample_id']
@@ -700,7 +700,7 @@ def initProgram( ):
     local_input_file = file_utils.getFullPath(WORKING_DIR, remote_input_file, True)
     local_output_file = file_utils.getFullPath(OUT_DIR, remote_output_file, True)    
     program_arguments = createProgramArguments( module_instance_json, WORKING_DIR, OUT_DIR )  # files will be downloaded here
-
+    
     run_json = {'module': run_module_name, 'run_job_id': run_job_id, \
                 'local_input_dir': WORKING_DIR, 'local_output_dir': OUT_DIR, \
                 'remote_input_dir': remote_input_directory, 'remote_output_dir': remote_output_directory, \
