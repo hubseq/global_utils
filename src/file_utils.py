@@ -670,13 +670,13 @@ def getRunIdFromLocation(file_folder):
     return getSubPath(file_folder, 4)
 
 def getFileIdFromLocation(file_folder):
-    return getSubPath(file_folder, 6)
-
-def getModuleIdFromLocation(file_folder):
     return getSubPath(file_folder, 5)
 
-def getSampleIdFromLocation(file_folder):
+def getModuleIdFromLocation(file_folder):
     return getSubPath(file_folder, 6)
+
+def getSampleIdFromLocation(file_folder):
+    return getSubPath(file_folder, 5)
 
 
 def getRunBaseFolder( file_fullpath ):
