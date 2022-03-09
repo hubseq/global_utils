@@ -369,6 +369,9 @@ def createIOJSON( run_args_json ):
         
         io_json['program_arguments'] = run_args_json['pargs'] if 'pargs' in run_args_json else ''
 
+        # subprogram to run, if given
+        io_json['program_subname'] = run_args_json['subprogram'] if ('subprogram' in run_args_json) else ''
+        
         # program options - module-specific
         if ('options' in run_args_json and run_args_json['options'] != ''):
             io_json['options'] = run_args_json['options']
@@ -444,7 +447,7 @@ def createModuleInstanceJSON( module_template_json, io_json, file_system = 's3' 
     
     mi_json = {'program_input': {}, 'program_output': {}, 'alternate_inputs': [], 'alternate_outputs': [], 'options': ''}
     mi_json['program_name'] = module_template_json['program_name']
-    mi_json['program_subname'] = module_template_json['program_subname']
+    mi_json['program_subname'] = io_json['program_subname'] if ('program_subname' in io_json and io_json['program_subname'] != '') else module_template_json['program_subname']
     mi_json['program_version'] = module_template_json['program_version']
     mi_json['module_version'] = module_template_json['module_version']    
     mi_json['program_arguments'] = io_json['program_arguments'] if io_json['program_arguments'] not in ['', None] else module_template_json['program_arguments']
