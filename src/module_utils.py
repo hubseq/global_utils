@@ -577,7 +577,7 @@ def createProgramArguments( module_instance_json, input_working_dir, output_work
             for i in range(0,len(str(input_json['input_prefix']).split(','))):
                 pargs_list = insertArgument(pargs_list, \
                                             [input_prefixes_temp[i], \
-                                             file_utils.downloadFiles(file_utils.getFullPath(input_json['input_directory'], input_files_temp[i])
+                                             file_utils.downloadFiles(file_utils.getFullPath(input_json['input_directory'], input_files_temp[i]), \
                                                                       input_working_dir, \
                                                                       file_utils.inferFileSystem(input_json['input_directory']), \
                                                                       mock)], \
