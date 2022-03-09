@@ -704,7 +704,7 @@ def runProgram( program_arguments, local_output_file = '' ):
     # run program - this should run program w arguments via command line on local machine / container
     print('RUNNING PROGRAM...')
     print('CMD: '+str(program_arguments))
-    executeProgram( program_arguments, local_output_file = '' )
+    executeProgram( program_arguments, local_output_file )
     return
 
 
