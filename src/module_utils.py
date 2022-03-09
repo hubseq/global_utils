@@ -201,6 +201,32 @@ def getRunArgs( ):
     return args
 
 
+def getSubprogram( rargs ):
+    """ Given the run arguments as a JSON, returns the value of the subprogram key.
+    """
+    return str(rargs['program_subname'])
+
+
+def getRunProgramArguments( rargs ):
+    """ Given the run arguments as a JSON, returns the value of the program_arguments key.
+    """
+    return str(rargs['program_arguments'])
+
+    
+def getArgument(pargs, arg_tag):
+    """ Given a list of program arguments, gets the argument after a given tag. Can pass a Python list or command-line string.
+    Example: getArgument( ['bwa','mem','-i','my.fastq','-o','my.bam'], '-o' ) => 'my.bam'
+    """
+    # convert command-line string to list
+    if type(pargs) == str:
+        pargs = pargs.split(' ')
+    # find the next argument
+    if arg_tag in pargs:
+        return str(pargs[pargs.index(arg_tag)+1])
+    else:
+        return ''
+    
+
 def insertArgument(arg_list, arg, pos):
     """ Insert arg into arg_list at pos. Integers, strings or lists can be inserted.
     -100 is a special pos that says 'don't insert argument'.
@@ -672,13 +698,13 @@ def uploadOutput( local_out, remote_out ):
     return
 
 
-def runProgram( program_arguments, local_output_file ):
+def runProgram( program_arguments, local_output_file = '' ):
     """ Runs the program specified in program arguments
     """
     # run program - this should run program w arguments via command line on local machine / container
     print('RUNNING PROGRAM...')
     print('CMD: '+str(program_arguments))
-    executeProgram( program_arguments, local_output_file )
+    executeProgram( program_arguments, local_output_file = '' )
     return
 
 
