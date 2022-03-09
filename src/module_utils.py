@@ -568,13 +568,28 @@ def createProgramArguments( module_instance_json, input_working_dir, output_work
                                                                mock)], \
                                     input_json['input_position'])
     else: # input_json['input_type'].lower() == 'file':
-        pargs_list = insertArgument(pargs_list, \
-                                    [input_json['input_prefix'], \
-                                     file_utils.downloadFiles(file_utils.getFullPath(input_json['input_directory'], input_json['input']), \
-                                                              input_working_dir, \
-                                                              file_utils.inferFileSystem(input_json['input_directory']), \
-                                                              mock)], \
-                                     input_json['input_position'])
+        # need to handle the case where inputs are such: -1 <INPUT1> -2 <INPUT2> - in these cases we MUST specify two inputs
+        if len(str(input_json['input_prefix']).split(',')) > 1 and \
+           ((type(input_json['input']) == str and len(input_json['input'].split(',')) > 1) or
+            (type(input_json['input']) == type([]) and len(input_json['input']) > 1)):
+            input_prefixes_temp = str(input_json['input_prefix']).split(',')
+            input_files_temp = input_json['input'].split(',') if type(input_json['input']) == str else input_json['input']
+            for i in range(0,len(str(input_json['input_prefix']).split(','))):
+                pargs_list = insertArgument(pargs_list, \
+                                            [input_prefixes_temp[i], \
+                                             file_utils.downloadFiles(file_utils.getFullPath(input_json['input_directory'], input_files_temp[i])
+                                                                      input_working_dir, \
+                                                                      file_utils.inferFileSystem(input_json['input_directory']), \
+                                                                      mock)], \
+                                            input_json['input_position'])
+        else:
+            pargs_list = insertArgument(pargs_list, \
+                                        [input_json['input_prefix'], \
+                                         file_utils.downloadFiles(file_utils.getFullPath(input_json['input_directory'], input_json['input']), \
+                                                                  input_working_dir, \
+                                                                  file_utils.inferFileSystem(input_json['input_directory']), \
+                                                                  mock)], \
+                                        input_json['input_position'])
     
     # add primary output files
     output_json = mi_json['program_output']
