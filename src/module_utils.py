@@ -745,7 +745,7 @@ def initProgram( ):
     local_output_file = file_utils.getFullPath(OUT_DIR, remote_output_file, True)    
     program_arguments = createProgramArguments( module_instance_json, WORKING_DIR, OUT_DIR )  # files will be downloaded here
     
-    run_json = {'module': run_module_name, 'run_job_id': run_job_id, \
+    run_json = {'module': run_module_name, 'run_job_id': run_job_id, 'docker_entry_dir': DOCKER_DIR, \
                 'local_input_dir': WORKING_DIR, 'local_output_dir': OUT_DIR, \
                 'remote_input_dir': remote_input_directory, 'remote_output_dir': remote_output_directory, \
                 'local_input_file': local_input_file, 'local_output_file': local_output_file, \
