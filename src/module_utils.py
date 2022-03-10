@@ -487,22 +487,22 @@ def createModuleInstanceJSON( module_template_json, io_json, file_system = 's3' 
     # main input
     for pi in module_template_json['program_input']:
         if file_utils.inferFileType(io_json['input']).upper() == pi['input_file_type'].upper():
-            mi_json['program_input'] = {'input': file_utils.getFileOnly(io_json['input']),
+            mi_json['program_input'] = {'input': io_json['input'] # file_utils.getFileOnly(io_json['input']),
                                         'input_type': pi['input_type'],
                                         'input_file_type': pi['input_file_type'],
-                                        'input_directory': getDirectory( io_json['input'], io_json['inputdir']) if 'inputdir' in io_json else file_utils.getFileFolder(io_json['input']),
+                                        'input_directory': io_json['inputdir'] if 'inputdir' in io_json else '' # getDirectory( io_json['input'], io_json['inputdir'] if 'inputdir' in io_json else ''),
                                         'input_position': pi['input_position'],
                                         'input_prefix': pi['input_prefix']}
     # main output
     for pi in module_template_json['program_output']:
         if file_utils.inferFileType(io_json['output']).upper() == pi['output_file_type'].upper():
-            mi_json['program_output'] = {'output': file_utils.getFileOnly(io_json['output']),
+            mi_json['program_output'] = {'output': io_json['output'] # file_utils.getFileOnly(io_json['output']),
                                         'output_type': pi['output_type'],
                                         'output_file_type': pi['output_file_type'],
-                                        'output_directory': getDirectory(io_json['output'], io_json['outputdir']) if 'outputdir' in io_json else file_utils.getFileFolder(io_json['output']),
+                                        'output_directory': io_json['outputdir'] if 'outputdir' in io_json else ''
                                         'output_position': pi['output_position'],
                                         'output_prefix': pi['output_prefix']}
-    # alternate input
+    # alternate input - input and input_directory needs to be fixed
     for alt_input in io_json['alternate_inputs']:
         for pi in module_template_json['alternate_inputs']:
             if file_utils.inferFileType(alt_input).upper() == pi['input_file_type'].upper():
@@ -530,7 +530,10 @@ def createModuleInstanceJSON( module_template_json, io_json, file_system = 's3' 
 
 
 def getInputDirectory( mi_json ):
-    return mi_json['program_input']['input_directory'] if 'input_directory' in mi_json['program_input'] else ''
+    if 'input_directory' in mi_json['program_input'] and mi_json['program_input']['input_directory'] not in ['', None]:
+        return mi_json['program_input']['input_directory']
+    elif 'input' in mi_json['program_input'] and mi_json['program_input']['input'] not in ['', None]:
+        return file_utils.getFileFolder(mi_json['program_input']['input'])
 
 
 def getInputFile( mi_json ):
@@ -538,7 +541,10 @@ def getInputFile( mi_json ):
 
 
 def getOutputDirectory( mi_json ):
-    return mi_json['program_output']['output_directory'] if 'output_directory' in mi_json['program_output'] else ''
+    if 'output_directory' in mi_json['program_output'] and mi_json['program_output']['output_directory'] not in ['', None]:
+	return mi_json['program_output']['output_directory']
+    elif 'output' in mi_json['program_output'] and mi_json['program_output']['output'] not in ['', None]:
+        return file_utils.getFileFolder(mi_json['program_output']['output'])
 
 
 def getOutputFile( mi_json ):
@@ -601,7 +607,7 @@ def createProgramArguments( module_instance_json, input_working_dir, output_work
                                     [input_json['input_prefix'], \
                                      file_utils.downloadFolder(file_utils.getFullPath(input_json['input_directory'], input_json['input']), \
                                                                input_working_dir, \
-                                                               file_utils.inferFileSystem(input_json['input_directory']), \
+                                                               file_utils.inferFileSystem(file_utils.getFullPath(input_json['input_directory'], input_json['input'])), \
                                                                mock)], \
                                     input_json['input_position'])
     else: # input_json['input_type'].lower() == 'file':
@@ -616,7 +622,7 @@ def createProgramArguments( module_instance_json, input_working_dir, output_work
                                             [input_prefixes_temp[i], \
                                              file_utils.downloadFiles(file_utils.getFullPath(input_json['input_directory'], input_files_temp[i]), \
                                                                       input_working_dir, \
-                                                                      file_utils.inferFileSystem(input_json['input_directory']), \
+                                                                      file_utils.inferFileSystem(file_utils.getFullPath(input_json['input_directory'], input_files_temp[i])), \
                                                                       mock)], \
                                             input_json['input_position'])
         else:
@@ -624,7 +630,7 @@ def createProgramArguments( module_instance_json, input_working_dir, output_work
                                         [input_json['input_prefix'], \
                                          file_utils.downloadFiles(file_utils.getFullPath(input_json['input_directory'], input_json['input']), \
                                                                   input_working_dir, \
-                                                                  file_utils.inferFileSystem(input_json['input_directory']), \
+                                                                  file_utils.inferFileSystem(file_utils.getFullPath(input_json['input_directory'], input_json['input'])), \
                                                                   mock)], \
                                         input_json['input_position'])
     

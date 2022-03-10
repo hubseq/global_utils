@@ -147,7 +147,7 @@ def getFullPath(root_folder, files, convert2string = False):
                 full_paths.append(os.path.join(root_folder, f))
     elif type(files) == type(''):
         full_paths = ''
-        if root_folder  in files:
+        if root_folder in files:
             full_paths = files
         else:
             full_paths = os.path.join(root_folder, files)
