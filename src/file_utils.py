@@ -125,7 +125,8 @@ def loadJSON( fname ):
 
 def getFullPath(root_folder, files, convert2string = False):
     """ Given a root_folder and a file STRING or LIST of files, return the full paths to these file(s).
-
+    Need some error checking here (e.g., root_folder cannot be blank)
+    
     >>> getFullPath( 's3://mybam', 'hello.bam' )
     's3://mybam/hello.bam'
     >>> getFullPath( 's3://mybam', ['hello.bam', 'hello2.bam'] )
@@ -133,6 +134,8 @@ def getFullPath(root_folder, files, convert2string = False):
     >>> getFullPath( 's3://mybam/', [''] )
     ['s3://mybam/']
     """
+    if type(root_folder) == type([]) and len(root_folder) > 0:
+        root_folder = root_folder[0]
     if type(files) == type([]):
         full_paths = []
         for f in files:
