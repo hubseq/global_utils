@@ -537,7 +537,7 @@ def getInputDirectory( mi_json ):
 
 
 def getInputFile( mi_json ):
-    return mi_json['program_input']['input'] if 'input' in mi_json['program_input'] else ''
+    return file_utils.getFileOnly(mi_json['program_input']['input']) if ('input' in mi_json['program_input'] and mi_json['program_input']['input'] not in ['', None] else ''
 
 
 def getOutputDirectory( mi_json ):
@@ -548,7 +548,7 @@ def getOutputDirectory( mi_json ):
 
 
 def getOutputFile( mi_json ):
-    return mi_json['program_output']['output'] if 'output' in mi_json['program_output'] else ''
+    return file_utils.getFileOnly(mi_json['program_output']['output']) if ('output' in mi_json['program_output'] and mi_json['program_output']['output'] not in ['', None] else ''
 
 
 def createProgramArguments( module_instance_json, input_working_dir, output_working_dir, rtype = 'str', mock = False ):
