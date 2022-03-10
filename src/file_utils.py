@@ -787,15 +787,16 @@ def getFileSystem( file_fullpath ):
 
 def getFileOnly( file_fullpath ):
     """ Gets the file only from a full file path
+    Note that this assumes that a file has a '.' !
     >>> getFileOnly( '/this/is/a/path/to.txt' )
     'to.txt'
     """
     if type(file_fullpath) == type([]):
         files_only = []
         for f in file_fullpath:
-            files_only.append(f.split('/')[-1])
+            files_only.append(f.split('/')[-1] if '.' in f.split('/')[-1] else '')
     elif type(file_fullpath) == type(''):
-        files_only = file_fullpath.split('/')[-1]
+        files_only = file_fullpath.split('/')[-1] if '.' in file_fullpath.split('/')[-1] else ''
     else:
         files_only = ''
     return files_only

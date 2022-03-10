@@ -487,21 +487,21 @@ def createModuleInstanceJSON( module_template_json, io_json, file_system = 's3' 
     # main input
     for pi in module_template_json['program_input']:
         if file_utils.inferFileType(io_json['input']).upper() == pi['input_file_type'].upper():
-            mi_json['program_input'] = {'input': io_json['input'] # file_utils.getFileOnly(io_json['input']),
+            mi_json['program_input'] = {'input': io_json['input'], \
                                         'input_type': pi['input_type'],
                                         'input_file_type': pi['input_file_type'],
-                                        'input_directory': io_json['inputdir'] if 'inputdir' in io_json else '' # getDirectory( io_json['input'], io_json['inputdir'] if 'inputdir' in io_json else ''),
+                                        'input_directory': io_json['inputdir'] if 'inputdir' in io_json else '',
                                         'input_position': pi['input_position'],
                                         'input_prefix': pi['input_prefix']}
     # main output
     for pi in module_template_json['program_output']:
         if file_utils.inferFileType(io_json['output']).upper() == pi['output_file_type'].upper():
-            mi_json['program_output'] = {'output': io_json['output'] # file_utils.getFileOnly(io_json['output']),
-                                        'output_type': pi['output_type'],
-                                        'output_file_type': pi['output_file_type'],
-                                        'output_directory': io_json['outputdir'] if 'outputdir' in io_json else ''
-                                        'output_position': pi['output_position'],
-                                        'output_prefix': pi['output_prefix']}
+            mi_json['program_output'] = {'output': io_json['output'], \
+                                         'output_type': pi['output_type'],
+                                         'output_file_type': pi['output_file_type'],
+                                         'output_directory': io_json['outputdir'] if 'outputdir' in io_json else '',
+                                         'output_position': pi['output_position'],
+                                         'output_prefix': pi['output_prefix']}
     # alternate input - input and input_directory needs to be fixed
     for alt_input in io_json['alternate_inputs']:
         for pi in module_template_json['alternate_inputs']:
@@ -637,7 +637,7 @@ def createProgramArguments( module_instance_json, input_working_dir, output_work
     # add primary output files
     output_json = mi_json['program_output']
     pargs_list = insertArgument(pargs_list, \
-                                [output_json['output_prefix'], file_utils.getFullPath(output_working_dir, output_json['output'])], \
+                                [output_json['output_prefix'], file_utils.getFullPath(output_working_dir, file_utils.getFileOnly(output_json['output']))], \
                                 output_json['output_position'])
     
     # add alternate input files
@@ -662,7 +662,7 @@ def createProgramArguments( module_instance_json, input_working_dir, output_work
     # add alternate output files
     for alt_output_json in mi_json['alternate_outputs']:
         pargs_list = insertArgument(pargs_list, \
-                                    [alt_output_json['output_prefix'], file_utils.getFullPath(output_working_dir, alt_output_json['output'])], \
+                                    [alt_output_json['output_prefix'], file_utils.getFullPath(output_working_dir, file_utils.getFileOnly(alt_output_json['output']))], \
                                     alt_output_json['output_position'])
     
     # finally insert program (+ subprogram) name
