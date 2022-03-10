@@ -541,9 +541,9 @@ def getInputFile( mi_json ):
 
 
 def getOutputDirectory( mi_json ):
-    if 'output_directory' in mi_json['program_output'] and mi_json['program_output']['output_directory'] not in ['', None]:
-	return mi_json['program_output']['output_directory']
-    elif 'output' in mi_json['program_output'] and mi_json['program_output']['output'] not in ['', None]:
+    if ('output_directory' in mi_json['program_output']) and (mi_json['program_output']['output_directory'] not in ['', None]):
+        return mi_json['program_output']['output_directory']
+    elif ('output' in mi_json['program_output']) and (mi_json['program_output']['output'] not in ['', None]):
         return file_utils.getFileFolder(mi_json['program_output']['output'])
 
 
