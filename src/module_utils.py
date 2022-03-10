@@ -394,7 +394,7 @@ def createIOJSON( run_args_json ):
         io_json['alternate_outputs'] = alternate_outputs_list
         
         io_json['program_arguments'] = run_args_json['pargs'] if ('pargs' in run_args_json and run_args_json['pargs'] not in ['', None]) else ''
-
+        
         # subprogram to run, if given
         io_json['program_subname'] = run_args_json['program_subname'] if ('program_subname' in run_args_json) else ''
         
