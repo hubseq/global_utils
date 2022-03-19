@@ -142,7 +142,7 @@ def getModuleTemplateDefaults( template_file ):
 
 def getModuleTemplateDefaultOutput( template_file ):
     defaults = getModuleTemplateDefaults( template_file )
-    return defaults['output_file']
+    return defaults['output_file'] if 'output_file' in defaults else ''
 
 def getModuleTemplateDefaultAltInputs( template_file ):
     defaults = getModuleTemplateDefaults( template_file )
@@ -159,15 +159,15 @@ def getModuleTemplateDefaultAltOutputs( template_file ):
     return out
 
 def getModule_vcpus( module_json ):
-    return module_json['compute']['vcpus']
+    return module_json['compute']['vcpus'] if ('compute' in module_json and 'vcpus' in module_json['compute']) else 1
 
 
 def getModule_memory( module_json ):
-    return module_json['compute']['memory']
+    return module_json['compute']['memory'] if ('compute' in module_json and 'memory' in module_json['compute']) else 2000
 
 
 def getModule_environment( module_json ):
-    return module_json['compute']['environment']
+    return module_json['compute']['environment'] if ('compute' in module_json and 'environment' in module_json['compute']) else 'aws'
 
 
 
