@@ -634,7 +634,7 @@ def groupInputFilesBySample( input_files_list ):
 
 
 def getSampleIDfromFASTQ( f ):
-    text2search = ['_L001','_L002','_L003','_L004','_R1','_R2','_I1','_I2']
+    text2search = ['_L001','_L002','_L003','_L004','_R1','_R2','_I1','_I2','.R1','.R2','.I1','.I2','.f']
     for t in text2search:
         if f.rfind(t) > -1:
             return f[0:f.rfind(t)]
@@ -643,7 +643,7 @@ def inferSampleID( file_name ):
     """ Given a sample file name, infer the sample ID. This won't be perfect but should work 99% of time.
     """
     f = file_name.split('.')[0]
-    if 'fastq' in file_name:
+    if '.fastq' in file_name or '.fq' in file_name:
         sampleid = getSampleIDfromFASTQ( f )
     else:
         sampleid = f
