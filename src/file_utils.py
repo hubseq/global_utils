@@ -564,6 +564,7 @@ def getRunSampleOutputFolders( root_folder, teamid, userids = [], pipelineids = 
     ['s3://npipublicinternal/test/dnaseq_targeted/run_test1/dnaseq_test/bwamem', 's3://npipublicinternal/test/dnaseq_targeted/run_test1/dnaseq_test/mpileup']
 
     """
+    print('IN GETRUNSAMPLEOUTPUTFOLDERS: {} {} {} {}'.format(str(pipelineids), str(runids), str(sampleids), str(moduleids)))
     # There are many nested for-loops to allow flexibility, but number of folders should be small enough, should be ok.
     output_folders = []
     # if userids is empty list, then this gets all userids
