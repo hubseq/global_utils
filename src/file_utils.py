@@ -552,7 +552,7 @@ def createSampleFilePath( root_folder, teamid, userid, pipelineid, runid, sample
     return fpath.rstrip('/')+'/'
 
 
-def getRunSampleOutputFolders( root_folder, teamid_in, userids_in = [], pipelineids_in = [], runids_in = [], sampleids_in = [], moduleids_in = []):
+def getRunSampleOutputFolders( root_folder, teamid, userids_in = [], pipelineids_in = [], runids_in = [], sampleids_in = [], moduleids_in = []):
     """ Get all sample output folders for a given set of users, pipelines, runs, modules, or samples.
     Note that this is flexible in getting ALL folders or a subset of folders within a team root directory.
     This function assumes the hierarchy for sample folders as:
