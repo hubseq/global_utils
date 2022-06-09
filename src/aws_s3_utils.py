@@ -314,7 +314,6 @@ def listSubFolders(s3_path, folders2include = [], folders2exclude = []):
         fout = open(uid+'_dfolderstmptmp.tmp','w')
         subprocess.check_call(cmd.split(' '), stdout=fout)
         fout.close()
-
         with open(uid+'_dfolderstmptmp.tmp','r') as f:
             for r in f:
                 rp = r.lstrip(' \t').rstrip(' \t\n')

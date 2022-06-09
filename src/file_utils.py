@@ -869,7 +869,7 @@ def createSampleFilePath( root_folder, teamid, userid, pipelineid, runid, sample
     return fpath.rstrip('/')+'/'
 
 
-def getRunSampleOutputFolders( root_folder, teamid, userids = [], pipelineids = [], runids = [], sampleids = [], moduleids = []):
+def getRunSampleOutputFolders( root_folder, teamid, userids_in = [], pipelineids_in = [], runids_in = [], sampleids_in = [], moduleids_in = []):
     """ Get all sample output folders for a given set of users, pipelines, runs, modules, or samples.
     Note that this is flexible in getting ALL folders or a subset of folders within a team root directory.
     This function assumes the hierarchy for sample folders as:
@@ -885,19 +885,19 @@ def getRunSampleOutputFolders( root_folder, teamid, userids = [], pipelineids = 
     # There are many nested for-loops to allow flexibility, but number of folders should be small enough, should be ok.
     output_folders = []
     # if userids is empty list, then this gets all userids
-    userids = getSubFolders( os.path.join(root_folder, teamid), userids)
+    userids = getSubFolders( os.path.join(root_folder, teamid), userids_in)
     for userid in userids:
         # if pipelineids is empty list, then this gets all pipeline ids
-        pipelineids = getSubFolders( os.path.join(root_folder, teamid, userid), pipelineids )
+        pipelineids = getSubFolders( os.path.join(root_folder, teamid, userid), pipelineids_in )
         for pipeid in pipelineids:
             # if runids is empty list, then this gets all run ids
-            runids = getSubFolders( os.path.join(root_folder, teamid, userid, pipeid), runids )
+            runids = getSubFolders( os.path.join(root_folder, teamid, userid, pipeid), runids_in )
             for rid in runids:
                 # if sampleids is empty list, then this gets all sample ids
-                sampleids = getSubFolders( os.path.join(root_folder, teamid, userid, pipeid, rid), sampleids )
+                sampleids = getSubFolders( os.path.join(root_folder, teamid, userid, pipeid, rid), sampleids_in )
                 for sid in sampleids:
                     # if moduleids is empty list, then this gets all module ids
-                    moduleids = getSubFolders( os.path.join(root_folder, teamid, userid, pipeid, rid, sid), moduleids )
+                    moduleids = getSubFolders( os.path.join(root_folder, teamid, userid, pipeid, rid, sid), moduleids_in )
                     for moduleid in moduleids:
                         output_folders.append( os.path.join(root_folder, teamid, userid, pipeid, rid, sid, moduleid))
     return output_folders
