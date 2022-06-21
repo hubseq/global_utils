@@ -29,8 +29,8 @@ Each docker module (app) should specify program arguments. Should be in exact or
 TEMPLATE DIR: /npimodules/templates/
 """
 
-MODULE_TEMPLATE_PATH = 's3://hubseq-data/test/templates/' 
-MODULE_DIR = 's3://hubseq-data/test/modules/'
+MODULE_TEMPLATE_PATH = 's3://hubseq-data/templates/' 
+MODULE_DIR = 's3://hubseq-data/modules/'
 
 def getModuleDirectory():
     return MODULE_DIR
