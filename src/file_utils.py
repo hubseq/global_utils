@@ -69,7 +69,7 @@ import aws_s3_utils
 PIPELINE_file_utils_JSON_VERSION = '20211219'
 GROUP_JSON_VERSION = '20211219'
 
-VALID_FILETYPES = ['FASTQ', 'BAM', 'SAM', 'BED', 'TXT', 'CSV', 'JSON', 'GZ', 'FASTQ.GZ', 'WIG', 'HTML']
+VALID_FILETYPES = ['FASTQ', 'BAM', 'SAM', 'BED', 'TXT', 'CSV', 'JSON', 'GZ', 'FASTQ.GZ', 'WIG', 'HTML', 'TAB']
 COMBO_FILETYPES = ['FASTQ.GZ']
 
 #####################################################
