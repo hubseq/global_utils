@@ -637,7 +637,7 @@ def createProgramArguments( module_instance_json, input_working_dir, output_work
     # add primary output files
     output_json = mi_json['program_output']
     pargs_list = insertArgument(pargs_list, \
-                                [output_json['output_prefix'], file_utils.getFullPath(output_working_dir, file_utils.getFileOnly(output_json['output']))], \
+                                [output_json['output_prefix'] if 'output_prefix' in output_json else '', file_utils.getFullPath(output_working_dir, file_utils.getFileOnly(output_json['output']))], \
                                 output_json['output_position'])
     
     # add alternate input files
