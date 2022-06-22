@@ -214,15 +214,32 @@ def getRunProgramArguments( rargs ):
 
     
 def getArgument(pargs, arg_tag):
-    """ Given a list of program arguments, gets the argument after a given tag. Can pass a Python list or command-line string.
-    Example: getArgument( ['bwa','mem','-i','my.fastq','-o','my.bam'], '-o' ) => 'my.bam'
+    """ Given a list of program arguments, gets the argument(s) after a given tag. Can pass a Python list or command-line string.
+    Returns a list of there is more than one program argument, otherwise returns a string.
+    
+    >>> getArgument( ['bwa','mem','-i','my.fastq','-o','my.bam'], '-o' )
+    'my.bam'
+    >>> getArgument( ['bwa','mem','-i','my.R1.fastq','my.R2.fastq','-o','my.bam'], '-i' )
+    ['my.R1.fastq', 'my.R2.fastq']
+    >>> getArgument( ['bwa','mem','-i','my.R1.fastq','my.R2.fastq','-o','my.bam'], '-p' )
+    ''
     """
     # convert command-line string to list
     if type(pargs) == str:
         pargs = pargs.split(' ')
     # find the next argument
     if arg_tag in pargs:
-        return str(pargs[pargs.index(arg_tag)+1])
+        return_args = []
+        pargs_parse = pargs[pargs.index(arg_tag)+1:]
+        while len(pargs_parse) > 0 and pargs_parse[0][0] != '-':
+            return_args.append(pargs_parse[0])
+            pargs_parse = pargs_parse[1:]
+        if len(return_args) > 1:
+            return return_args
+        elif len(return_args) == 1:
+            return return_args[0]
+        else:
+            return ''
     else:
         return ''
     
