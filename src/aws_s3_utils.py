@@ -271,6 +271,10 @@ def listSubFiles(s3_path, patterns2include, patterns2exclude):
     if type(patterns2exclude) == str:
         patterns2exclude = [patterns2exclude]
 
+    if type(s3_path) == type([]) and s3_path != []:
+        s3_path = s3_path[0]
+    elif type(s3_path) == type([]) and s3_path == []:
+        s3_path = ''        
     cmd = 'aws s3 ls %s' % (s3_path.rstrip('/')+'/')
     dfiles = []
     uid = str(uuid.uuid4())[0:6]  # prevents race conditions on tmp file
