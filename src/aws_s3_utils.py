@@ -298,16 +298,17 @@ def listSubFiles(s3_path, patterns2include, patterns2exclude):
     return dfiles
 
 
-def listSubFolders(s3_path, folders2include = [], folders2exclude = []):
+def listSubFolders(s3_path, folders2include = [], folders2exclude = [], options = ''):
     """ Lists all immediate subfolders under a given S3 path.
     :param s3_path: s3 folder path
     :param folders2include: LIST, if specified, only include these folders
     :param folders2exclude: LIST of folders to exclude
+    :param options: options to include with ls call
     :return: found subfolders
     >>> listSubFolders('s3://hubpublicinternal/test/', ['aws_s3_utils'])
     ['aws_s3_utils']
     """
-    cmd = 'aws s3 ls %s' % (s3_path.rstrip('/')+'/')
+    cmd = 'aws s3 ls {} {}'.format(options, (s3_path.rstrip('/')+'/')) #   %s.... % (s3_path.rstrip('/')+'/')
     dfolders = []
     uid = str(uuid.uuid4())[0:6]  # prevents race conditions on tmp file
     try:
