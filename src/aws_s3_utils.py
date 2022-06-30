@@ -308,7 +308,8 @@ def listSubFolders(s3_path, folders2include = [], folders2exclude = [], options 
     >>> listSubFolders('s3://hubpublicinternal/test/', ['aws_s3_utils'])
     ['aws_s3_utils']
     """
-    cmd = 'aws s3 ls {} {}'.format(options, (s3_path.rstrip('/')+'/')) #   %s.... % (s3_path.rstrip('/')+'/')
+    ls_cmd = 'aws s3 ls {}'.format(options)
+    cmd = ls_cmd + ' %s' % (s3_path.rstrip('/')+'/')
     dfolders = []
     uid = str(uuid.uuid4())[0:6]  # prevents race conditions on tmp file
     try:
