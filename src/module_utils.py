@@ -213,10 +213,11 @@ def getRunProgramArguments( rargs ):
     return str(rargs['program_arguments'])
 
     
-def getArgument(pargs, arg_tag, return_type = 'multiple' ):
+def getArgument(pargs, arg_tag, return_type = 'implicit', default_value = '' ):
     """ Given a list of program arguments, gets the argument(s) after a given tag. Can pass a Python list or command-line string.
     By default, returns a list of there is more than one program argument, otherwise returns a string.
     Can force a list return type by return_type = 'list'
+    default_value is the default value to return if arg_tag is not found.
     
     >>> getArgument( ['bwa','mem','-i','my.fastq','-o','my.bam'], '-o' )
     'my.bam'
@@ -240,9 +241,9 @@ def getArgument(pargs, arg_tag, return_type = 'multiple' ):
         elif len(return_args) == 1:
             return return_args[0]
         else:
-            return ''
+            return default_value if return_type != 'list' else []
     else:
-        return ''
+        return default_value if return_type != 'list' else []
     
 
 def insertArgument(arg_list, arg, pos):
