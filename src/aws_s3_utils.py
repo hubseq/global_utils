@@ -274,17 +274,16 @@ def listSubFiles(s3_path, patterns2include, patterns2exclude):
     if type(s3_path) == type([]) and s3_path != []:
         s3_path = s3_path[0]
     elif type(s3_path) == type([]) and s3_path == []:
-        s3_path = ''        
+        s3_path = ''
+    
     cmd = 'aws s3 ls %s' % (s3_path.rstrip('/')+'/')
     dfiles = []
     uid = str(uuid.uuid4())[0:6]  # prevents race conditions on tmp file
-
     # output of S3 copy to temporary file
     try:
-        fout = open(uid+'_dfilestmptmp.tmp','w')
-        subprocess.check_call(cmd.split(' '), stdout=fout)
-        fout.close()
-
+        # I think calledprocesserror will be called if file not found
+        with open(uid+'_dfilestmptmp.tmp','w') as fout:
+            subprocess.check_call(cmd.split(' '), stdout=fout)
         # get a list of all downloaded files
         with open(uid+'_dfilestmptmp.tmp','r') as f:
             for r in f:
@@ -297,7 +296,10 @@ def listSubFiles(s3_path, patterns2include, patterns2exclude):
         rm_command = ['rm',uid+'_dfilestmptmp.tmp']
         subprocess.check_call(rm_command)
     except subprocess.CalledProcessError:
-        print('CALLED PROCESS ERROR in aws_s3_utils.listSubFiles()')
+        print('CALLED PROCESS ERROR in aws_s3_utils.listSubFiles() or FILES NOT FOUND')
+        if os.path.exists(uid+'_dfilestmptmp.tmp'):
+            rm_command = ['rm',uid+'_dfilestmptmp.tmp']
+            subprocess.check_call(rm_command)
         return []
     return dfiles
 
