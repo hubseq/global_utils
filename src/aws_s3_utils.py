@@ -342,22 +342,33 @@ def listSubFolders(s3_path, folders2include = [], folders2exclude = [], options 
         return []
 
 
-def get_metadata( s3path ):
-    """ Gets metadata for an object (file or folder) at the given S3 path
+def get_metadata( s3paths ):
+    """ Gets metadata for objects (files or folders) at the given S3 paths (string-list)
+    s3paths: string of comma-delimited S3 paths - 'obj1,obj2,...'
+    returns: corresponding list of tags
     """
-    bucket = s3path.split('/')[2]
-    key = '/'.join(s3path.split('/')[3:])
-    response = s3_client.get_object_tagging(Bucket=bucket,Key=key)
-    metadata = response['TagSet']
-    return metadata
+    metadata_list = []
+    s3paths_list = s3paths.split(',')
+    for s3path in s3paths_list:
+        bucket = s3path.split('/')[2]
+        key = '/'.join(s3path.split('/')[3:])
+        response = s3_client.get_object_tagging(Bucket=bucket,Key=key)
+        if 'TagSet' in response:
+            metadata = response['TagSet']
+        else:
+            metadata = {}
+        metadata_list.append( metadata )
+    return metadata_list
 
-def set_metadata( s3path, tags_dict, overwrite = 'True' ):
-    """ Sets metadata for object (file or folder) at the given S3 path as the passed in tags.
+def set_metadata( s3paths, tags_dict, overwrite = 'True' ):
+    """ Sets metadata for objects (files or folders) at the given S3 paths as the passed in tags.
         If tags exist, it overwrites if overwrite = True (default).
         Currently, can have up to 10 tags.
+        All objects will get the same tags.
 
+        s3paths: string of comma-delimited objects in S3 - 'obj1,obj2,...'
         tags_dict: DICT - e.g., {'project': 'epigenome', 'id': 'ID-01', 'tissue': 'heart'}
-        returns: set tags
+        returns: set tags (list)
     """
     def getCurrentTag( k, tags ):
         """ List of tags format as [{'Key': k, 'Value': v}, {'Key2': k2, 'Value2': v2},...]
@@ -368,22 +379,26 @@ def set_metadata( s3path, tags_dict, overwrite = 'True' ):
                 return t
         return {}
     
-    bucket = s3path.split('/')[2]
-    key = '/'.join(s3path.split('/')[3:])
-    # get the current tags, and only overwrite if overwrite = True
-    current_tags = get_metadata( s3path )
-    tag_set = []
-    for k, v in tags_dict.items():
-        new_tag = {'Key': k, 'Value': v}
-        # only overwrite if we specify so, or if tag key does not exist
-        if overwrite[0].upper()=='T' or (k not in list(map(lambda kv: kv['Key'], current_tags))):
-            tag_set.append(new_tag)
-        else:
-            # otherwise keep the current tag
-            current_tag = getCurrentTag( k, current_tags )
-            tag_set.append( current_tag )
-    
-    response = s3_client.put_object_tagging(Bucket=bucket,Key=key, Tagging={'TagSet': tag_set})
-    return tag_set
+    tag_sets = []
+    s3paths_list = s3paths.split(',')
+    for s3path in s3paths_list:
+        bucket = s3path.split('/')[2]
+        key = '/'.join(s3path.split('/')[3:])
+        # get the current tags, and only overwrite if overwrite = True
+        current_tags = get_metadata( s3path )[0]
+        tag_set = []
+        for k, v in tags_dict.items():
+            new_tag = {'Key': k, 'Value': v}
+            # only overwrite if we specify so, or if tag key does not exist
+            if overwrite[0].upper()=='T' or (k not in list(map(lambda kv: kv['Key'], current_tags))):
+                tag_set.append(new_tag)
+            else:
+                # otherwise keep the current tag
+                current_tag = getCurrentTag( k, current_tags )
+                tag_set.append( current_tag )
+        # update metadata for S3 object
+        response = s3_client.put_object_tagging(Bucket=bucket,Key=key, Tagging={'TagSet': tag_set})
+        tag_sets.append(tag_set)
+    return tag_sets
     
     
