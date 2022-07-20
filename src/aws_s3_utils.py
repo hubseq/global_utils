@@ -1,4 +1,4 @@
-import os, boto3, subprocess, uuid
+import os, boto3, subprocess, uuid, json
 
 s3 = boto3.resource('s3')
 s3_client = boto3.client('s3')
@@ -341,6 +341,22 @@ def listSubFolders(s3_path, folders2include = [], folders2exclude = [], options 
     except subprocess.CalledProcessError:
         return []
 
+def get_json_object( s3paths ):
+    """ Gets content of JSON files in S3, specified by S3 paths.
+    s3paths: string of comma-delimited S3 paths to JSON files - 'obj1,obj2,...'
+    returns: corresponding list of JSON content (ordered)
+    """
+    json_list = []
+    s3paths_list = s3paths.split(',')
+    for s3path in s3paths_list:
+        bucket = s3path.split('/')[2]
+        key = '/'.join(s3path.split('/')[3:])
+
+        obj = s3.Object(bucket, key)
+        data = obj.get()['Body'].read().decode('utf-8')
+        json_data = json.loads(data)
+        json_list.append(json_data)
+    return json_list
 
 def get_metadata( s3paths ):
     """ Gets metadata for objects (files or folders) at the given S3 paths (string-list)
