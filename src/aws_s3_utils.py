@@ -358,6 +358,27 @@ def get_json_object( s3paths ):
         json_list.append(json_data)
     return json_list
 
+def list_objects( s3path ):
+    """ List objects in an S3 object path. Returns a JSON response with format:
+      {'ResponseMetadata': 
+         {'RequestId': ...,
+          'HostId': ...
+          'HTTPStatusCode': 200,
+          'HTTPHeaders': ...
+          'IsTruncated': False,
+          'Contents': 
+            [{'Key': '<filename>' 'LastModified': ...', 'Size': '...'...},
+             {'Key': '...
+            ]
+         }}}
+    """
+    bucket = s3path.split('/')[2]
+    key = str('/'.join(s3path.split('/')[3:])).rstrip('/') + '/'
+    region = 'us-west-2'
+    # s3_endpoint = '{}.s3.{}.amazonaws.com/{}'.format(bucket,region,key)
+    response = s3_client.list_objects_v2( Bucket=bucket, Prefix=key, Delimiter='/' )
+    return response
+
 def get_metadata( s3paths ):
     """ Gets metadata for objects (files or folders) at the given S3 paths (string-list)
     s3paths: string of comma-delimited S3 paths - 'obj1,obj2,...'
