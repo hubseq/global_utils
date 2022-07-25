@@ -358,6 +358,20 @@ def get_json_object( s3paths ):
         json_list.append(json_data)
     return json_list
 
+def add_to_json_object( s3path, newpairs ):
+    """ Adds new key value pairs to an existing S3 JSON object
+    """
+    bucket = s3path.split('/')[2]
+    key = '/'.join(s3path.split('/')[3:])
+    json_data = get_json_object( s3path )[0]
+    for k, v in newpairs.items():
+        if k not in json_data:
+            json_data[k] = v
+    
+    response = s3_client.put_object( Body=json.dumps(json_data).encode(), Bucket=bucket, Key=key )
+    return response
+
+
 def list_objects( s3path ):
     """ List objects in an S3 object path. Returns a JSON response with format:
       {'ResponseMetadata': 
