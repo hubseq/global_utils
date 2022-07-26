@@ -418,7 +418,11 @@ def get_metadata( s3paths ):
         else:
             metadata = {}
         metadata_list.append( metadata )
-    return metadata_list
+    if ',' in s3paths:
+        return metadata_list
+    else:
+        return metadata_list[0]
+
 
 def set_metadata( s3paths, tags_dict, overwrite = 'True' ):
     """ Sets metadata for objects (files or folders) at the given S3 paths as the passed in tags.
@@ -459,7 +463,10 @@ def set_metadata( s3paths, tags_dict, overwrite = 'True' ):
         # update metadata for S3 object
         response = s3_client.put_object_tagging(Bucket=bucket,Key=key, Tagging={'TagSet': tag_set})
         tag_sets.append(tag_set)
-    return tag_sets
+    if ',' in s3paths:
+        return tag_sets
+    else:
+        return tag_sets[0]
     
     
 def dateConverter(json_object):
