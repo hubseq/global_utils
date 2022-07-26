@@ -461,3 +461,9 @@ def set_metadata( s3paths, tags_dict, overwrite = 'True' ):
     return tag_sets
     
     
+def dateConverter(json_object):
+    """ AWS response objects often contain datetime objects. 
+    For proper JSON stringify, need to convert these datetime objects to string date format.
+    """
+    if isinstance(json_object, datetime.datetime):
+        return json_object.__str__()
