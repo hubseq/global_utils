@@ -356,7 +356,11 @@ def get_json_object( s3paths ):
         data = obj.get()['Body'].read().decode('utf-8')
         json_data = json.loads(data)
         json_list.append(json_data)
-    return json_list
+    # we return a list of JSON objects if we passed multiple S3 paths
+    if ',' in s3paths:
+        return json_list
+    else:
+        return json_list[0]
 
 def add_to_json_object( s3path, newpairs ):
     """ Adds new key value pairs to an existing S3 JSON object
@@ -364,9 +368,13 @@ def add_to_json_object( s3path, newpairs ):
     bucket = s3path.split('/')[2]
     key = '/'.join(s3path.split('/')[3:])
     json_data = get_json_object( s3path )[0]
-    for k, v in newpairs.items():
-        if k not in json_data:
-            json_data[k] = v
+    # if json_data is itself a list, we can just append. Otherwise we add key by key.
+    if type(json_data) == type([]):
+        json_data.append( newpairs )
+    elif type(json_data) == type({}):
+        for k, v in newpairs.items():
+            if k not in json_data:
+                json_data[k] = v
     
     response = s3_client.put_object( Body=json.dumps(json_data).encode(), Bucket=bucket, Key=key )
     return response
