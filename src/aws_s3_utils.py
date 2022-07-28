@@ -377,7 +377,20 @@ def add_to_json_object( s3path, newpairs ):
     return response
 
 
-def list_objects( s3path ):
+def _filter_list_objects_response( response, search_pattern ):
+    """ private function
+    Narrow down file list response object if we are searching for a specific file pattern
+    """
+    files2remove = []
+    for file_info in response["Contents"]:
+        if "Key" in file_info and search_pattern not in file_info["Key"]:
+            files2remove.append(file_info)
+    for file2remove in files2remove:
+        response["Contents"].remove(file2remove)
+    return response
+
+
+def list_objects( s3path, searchpattern = '' ):
     """ List objects in an S3 object path. Returns a JSON response with format:
       {'ResponseMetadata': 
          {'RequestId': ...,
@@ -390,13 +403,47 @@ def list_objects( s3path ):
              {'Key': '...
             ]
          }}}
+
+    searchpattern: only include files that contain the passed searched pattern (optional)
+
+    example of returned file info:
+    {"Contents": [
+        {
+            "Key": "hubseq/jira.pdf",
+            "LastModified": "2022-07-27 23:11:22+00:00",
+            "ETag": "\"46213a6178ac104ba811cc5bb0133218\"",
+            "Size": 159226,
+            "StorageClass": "STANDARD"
+        },...
+    ]}
     """
     bucket = s3path.split('/')[2]
     key = str('/'.join(s3path.split('/')[3:])).rstrip('/') + '/'
     region = 'us-west-2'
     # s3_endpoint = '{}.s3.{}.amazonaws.com/{}'.format(bucket,region,key)
     response = s3_client.list_objects_v2( Bucket=bucket, Prefix=key, Delimiter='/' )
-    return response
+    ## narrow down file list if we are searching for a specific file pattern
+    if searchpattern != '' and "Contents" in response:
+        return _filter_list_objects_response( response, searchpattern )
+    else:
+        return response
+
+def list_objects_nested( s3path, searchpattern ):
+    """ Similar to list_objects but will list objects in nested subfolders
+    Nested subfolders are found in the "CommonPrefixes" key:
+    {
+    "CommonPrefixes": [
+        {
+            "Prefix": "hubseq/guestuser/"
+        },
+        {
+            "Prefix": "hubseq/test/"
+        },...
+        ]
+    }
+    """
+    
+    return
 
 def get_metadata( s3paths ):
     """ Gets metadata for objects (files or folders) at the given S3 paths (string-list)
