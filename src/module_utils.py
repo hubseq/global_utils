@@ -76,20 +76,26 @@ def getModuleTemplateLocation( which_module ):
     return getModuleTemplate( which_module )
 
 
-def getModuleTemplate( which_module, which_submodule = '' ):
+def getModuleTemplate( which_module, which_submodule = '', module_basedir = MODULE_TEMPLATE_PATH ):
     """ Returns the template module JSON file path for input docker module
     """
     if which_submodule == '':
-        return os.path.join(MODULE_TEMPLATE_PATH, which_module+'.template.json')
+        return os.path.join(module_basedir, which_module+'.template.json')
     else:
-        return os.path.join(MODULE_TEMPLATE_PATH, which_module+'.'+str(which_submodule)+'.template.json')        
+        return os.path.join(module_basedir, which_module+'.'+str(which_submodule)+'.template.json')        
 
 
-def downloadModuleTemplate( which_module, dest_folder, which_submodule = '' ):
-    """ Downloads the module template to the destination directory
+def downloadModuleTemplate( which_module, dest_folder, which_submodule = '', filesystem = 's3' ):
+    """ Downloads the module template to the destination directory.
+        If local, assumes the module template file is in the same directory as the calling function.
     """
-    module_template_file = getModuleTemplate( which_module, which_submodule )
-    module_template_path = file_utils.downloadFile( module_template_file, dest_folder )
+    if filesystem == 's3':
+        module_template_file = getModuleTemplate( which_module, which_submodule, MODULE_TEMPLATE_PATH )
+        module_template_path = file_utils.downloadFile( module_template_file, dest_folder )
+    elif filesystem == 'local':
+        module_template_path = getModuleTemplate( which_module, which_submodule, os.getcwd() )
+    else:
+        module_template_path = ''
     return module_template_path
     
 
