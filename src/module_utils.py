@@ -76,16 +76,19 @@ def getModuleTemplateLocation( which_module ):
     return getModuleTemplate( which_module )
 
 
-def getModuleTemplate( which_module ):
+def getModuleTemplate( which_module, which_submodule = '' ):
     """ Returns the template module JSON file path for input docker module
     """
-    return os.path.join(MODULE_TEMPLATE_PATH, which_module+'.template.json')
+    if which_submodule == '':
+        return os.path.join(MODULE_TEMPLATE_PATH, which_module+'.template.json')
+    else:
+        return os.path.join(MODULE_TEMPLATE_PATH, which_module+'.'+str(which_submodule)+'.template.json')        
 
 
-def downloadModuleTemplate( which_module, dest_folder ):
+def downloadModuleTemplate( which_module, dest_folder, which_submodule = '' ):
     """ Downloads the module template to the destination directory
     """
-    module_template_file = getModuleTemplate( which_module )
+    module_template_file = getModuleTemplate( which_module, which_submodule )
     module_template_path = file_utils.downloadFile( module_template_file, dest_folder )
     return module_template_path
     
