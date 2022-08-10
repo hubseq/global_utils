@@ -51,3 +51,41 @@ def getS3path( partialFilePaths ):
     else:
         return fullPaths
     
+
+def getS3path_args( argslist_input ):
+    """ Takes an arguments list (either space-delimited string or a list) and
+        for any paths that are marked with ~/
+        replaces with S3 TEAM_BUCKET name.
+
+    >>> lambda_utils.getS3path_args(['-a','-b','~/test/temp.txt','/blah'])
+    ['-a', '-b', 's3://hubtenants/test/temp.txt', '/blah']
+    >>> lambda_utils.getS3path_args('-a -b ~/test/temp.txt /blah')
+    '-a,-b,s3://hubtenants/test/temp.txt,/blah'
+    """
+    TEAM_BUCKET = 's3://hubtenants/'
+
+    # create list of partial file paths from input
+    if type(argslist_input)==type(''):
+        argsList = argslist_input.split(' ')
+        returnType = "string"
+    elif type(argslist_input)==type([]):
+        argsList = argslist_input
+        returnType = "list"
+    else:
+        argsList = []
+        returnType = "list"
+
+    # create full filepaths
+    fullArgsList = []
+    for f in argsList:
+        if f.startswith('~/'):
+            fullArgsList.append(os.path.join(TEAM_BUCKET, f[2:]))
+        else:
+            fullArgsList.append(f)
+
+    # format and return full filepaths
+    if returnType=="string":
+        return ','.join(fullArgsList)
+    else:
+        return fullArgsList
+    
