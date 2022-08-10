@@ -1,0 +1,11 @@
+#
+# db_utils
+#
+import aws_s3_utils
+
+DB_LOC = "s3://hubseq-db/hubseq/"
+
+def db_insert(tbl, rows):
+    response = aws_s3_utils.add_to_json_object(os.path.join(DB_LOC,tbl+".json"), rows)
+    return response
+
