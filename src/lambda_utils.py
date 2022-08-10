@@ -60,7 +60,7 @@ def getS3path_args( argslist_input ):
     >>> lambda_utils.getS3path_args(['-a','-b','~/test/temp.txt','/blah'])
     ['-a', '-b', 's3://hubtenants/test/temp.txt', '/blah']
     >>> lambda_utils.getS3path_args('-a -b ~/test/temp.txt /blah')
-    '-a,-b,s3://hubtenants/test/temp.txt,/blah'
+    '-a -b s3://hubtenants/test/temp.txt /blah'
     """
     TEAM_BUCKET = 's3://hubtenants/'
 
@@ -85,7 +85,7 @@ def getS3path_args( argslist_input ):
 
     # format and return full filepaths
     if returnType=="string":
-        return ','.join(fullArgsList)
+        return ' '.join(fullArgsList)
     else:
         return fullArgsList
     
