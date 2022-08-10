@@ -361,13 +361,19 @@ def get_json_object( s3paths ):
 
 def add_to_json_object( s3path, newpairs ):
     """ Adds new key value pairs to an existing S3 JSON object
+
+    (before: test.json = [])
+    >>> aws_s3_utils.add_to_json_object( "s3://hubseq-db/hubseq/test.json", [{"a": 1, "b": 2}, {"c": 3, "d": 4, "e": 5}])
+    {'ResponseMetadata': {'RequestId': 'M2D5NRA0C4XZA1C4', 'HostId': 'tP75NO30/io8AtwCBSI/hkQLytdAQhF8AzQ/cCaPxwy7E+SnBd9dJ9Qw08WsBrV/KJJN8ZU3ZPo=', 'HTTPStatusCode': 200, 'HTTPHeaders': {'x-amz-id-2': 'tP75NO30/io8AtwCBSI/hkQLytdAQhF8AzQ/cCaPxwy7E+SnBd9dJ9Qw08WsBrV/KJJN8ZU3ZPo=', 'x-amz-request-id': 'M2D5NRA0C4XZA1C4', 'date': 'Wed, 10 Aug 2022 23:55:21 GMT', 'x-amz-version-id': '5t9dAbPxN5mWnerG3s1BkOo_KRXJTriT', 'x-amz-server-side-encryption': 'AES256', 'etag': '"818ed2e3dd0b1c240fe0a3cdce52c7d6"', 'server': 'AmazonS3', 'content-length': '0'}, 'RetryAttempts': 1}, 'ETag': '"818ed2e3dd0b1c240fe0a3cdce52c7d6"', 'ServerSideEncryption': 'AES256', 'VersionId': '5t9dAbPxN5mWnerG3s1BkOo_KRXJTriT'}
+    (after: test.json = [{"a": 1, "b": 2}, {"c": 3, "d": 4, "e": 5}])
     """
     bucket = s3path.split('/')[2]
     key = '/'.join(s3path.split('/')[3:])
     json_data = get_json_object( s3path )[0]
     # if json_data is itself a list, we can just append. Otherwise we add key by key.
     if type(json_data) == type([]):
-        json_data.append( newpairs )
+        for newpair in newpairs:
+            json_data.append( newpair )
     elif type(json_data) == type({}):
         for k, v in newpairs.items():
             if k not in json_data:
