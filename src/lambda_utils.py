@@ -21,6 +21,8 @@ def getS3path( partialFilePaths ):
     ['s3://hubtenants/hubseq/test/file1.pdf']
     >>> lambda_utils.getS3path(['hubseq/test/file1.pdf', 'hubseq/file2.txt'])
     ['s3://hubtenants/hubseq/test/file1.pdf', 's3://hubtenants/hubseq/file2.txt']
+    >>> lambda_utils.getS3path(['s3://hubseq-data/test/file1.pdf', 's3://hubseq-data/test/file2.txt'])
+    ['s3://hubseq-data/test/file1.pdf', 's3://hubseq-data/test/file2.txt']
     """
     TEAM_BUCKET = 's3://hubtenants/'
 
@@ -40,6 +42,8 @@ def getS3path( partialFilePaths ):
     for f in partialFilePathsList:
         if not f.startswith('s3://'):
             fullPaths.append(os.path.join(TEAM_BUCKET, f.lstrip('/')))
+        else:
+            fullPaths.append(f)
 
     # format and return full filepaths
     if returnType=="string":
