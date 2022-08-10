@@ -57,6 +57,9 @@ def getS3path_args( argslist_input ):
         for any paths that are marked with ~/
         replaces with S3 TEAM_BUCKET name.
 
+        Special case if we have a string of strings (module_args in run_pipeline)
+         - just replace ~/ with S3 TEAM BUCKET name.
+
     >>> lambda_utils.getS3path_args(['-a','-b','~/test/temp.txt','/blah'])
     ['-a', '-b', 's3://hubtenants/test/temp.txt', '/blah']
     >>> lambda_utils.getS3path_args('-a -b ~/test/temp.txt /blah')
@@ -66,26 +69,17 @@ def getS3path_args( argslist_input ):
 
     # create list of partial file paths from input
     if type(argslist_input)==type(''):
-        argsList = argslist_input.split(' ')
-        returnType = "string"
+        return argslist_input.replace('~/',TEAM_BUCKET)
     elif type(argslist_input)==type([]):
         argsList = argslist_input
-        returnType = "list"
-    else:
-        argsList = []
-        returnType = "list"
-
-    # create full filepaths
-    fullArgsList = []
-    for f in argsList:
-        if f.startswith('~/'):
-            fullArgsList.append(os.path.join(TEAM_BUCKET, f[2:]))
-        else:
-            fullArgsList.append(f)
-
-    # format and return full filepaths
-    if returnType=="string":
-        return ' '.join(fullArgsList)
-    else:
+        # create full filepaths
+        fullArgsList = []
+        for f in argsList:
+            if f.startswith('~/'):
+                fullArgsList.append(os.path.join(TEAM_BUCKET, f[2:]))
+            else:
+                fullArgsList.append(f)
         return fullArgsList
+    else:
+        return []
     
