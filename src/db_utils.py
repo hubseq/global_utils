@@ -12,5 +12,5 @@ def db_insert(tbl, rows):
 
 def db_fetch(tbl):
     response = aws_s3_utils.get_json_object(os.path.join(DB_LOC,tbl+".json"))
-    return response
+    return response[0]
 
