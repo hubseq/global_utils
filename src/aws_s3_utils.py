@@ -359,6 +359,37 @@ def get_json_object( s3paths ):
         json_list.append(json_data)
     return json_list
 
+def edit_json_object( s3path, pairs2search, pairs2update ):
+    """ Updates an existing S3 JSON object with new pairs.
+        pairs2search: list of key:value pairs to search for in JSON object [{key1:value1}, {key2: value2},...]
+        pairs2update: matched list of key:value pairs to update in JSON object
+
+    (before: [{"a": 1, "b": 2}, {"c": 3, "d": 4, "e": 5}, {"g": 6}, {"h": 8, "i": 9}] )
+    >>> aws_s3_utils.edit_json_object('s3://hubseq-db/hubseq/test.json', [{"c": 3}, {"b": 2}], [{"e": 10}, {"j": 11}])
+    {'ResponseMetadata': {'RequestId': 'NR3EHTBYPPNH677N', 'HostId': 'Jt08TAQT1BCJ2TFxncN/L5p39BImVU+0Aq+g7SSRp3ltRT2d0l6DQu+xiApplYXsFtbL9XmiBZQ=', 'HTTPStatusCode': 200, 'HTTPHeaders': {'x-amz-id-2': 'Jt08TAQT1BCJ2TFxncN/L5p39BImVU+0Aq+g7SSRp3ltRT2d0l6DQu+xiApplYXsFtbL9XmiBZQ=', 'x-amz-request-id': 'NR3EHTBYPPNH677N', 'date': 'Thu, 11 Aug 2022 03:57:52 GMT', 'x-amz-version-id': 'u1w6fo3dG9LSnhlX6pw__dYp.drkQ5hZ', 'x-amz-server-side-encryption': 'AES256', 'etag': '"288cbe6243118f973884cfa2d8ed7aae"', 'server': 'AmazonS3', 'content-length': '0'}, 'RetryAttempts': 1}, 'ETag': '"288cbe6243118f973884cfa2d8ed7aae"', 'ServerSideEncryption': 'AES256', 'VersionId': 'u1w6fo3dG9LSnhlX6pw__dYp.drkQ5hZ'}
+    (after: [{"a": 1, "b": 2, "j": 11}, {"c": 3, "d": 4, "e": 10}, {"g": 6}, {"h": 8, "i": 9}])
+    """
+    bucket = s3path.split('/')[2]
+    key = '/'.join(s3path.split('/')[3:])
+    # current JSON data in object
+    json_data = get_json_object( s3path )[0]    
+    for i in range(0,len(pairs2search)):
+        pair = pairs2search[i]
+        k2search = list(pair.keys())[0]
+        v2search = list(pair.values())[0]
+        pair2update = pairs2update[i]
+        k2replace = list(pair2update.keys())[0]
+        v2replace = list(pair2update.values())[0]
+        # now search for k:v pair in json_data - yes, this is O(n^2)
+        for j in range(0,len(json_data)):
+            json_entry = json_data[j]
+            if k2search in json_entry and json_entry[k2search]==v2search:
+                json_data[j][k2replace] = v2replace
+                break    
+    response = s3_client.put_object( Body=json.dumps(json_data).encode(), Bucket=bucket, Key=key )
+    return response    
+
+
 def add_to_json_object( s3path, newpairs ):
     """ Adds new key value pairs to an existing S3 JSON object
 
