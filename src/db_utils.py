@@ -4,7 +4,7 @@ import os
 #
 import aws_s3_utils
 
-DB_LOC = "s3://hubseq-db/hubseq/"
+DB_LOC = "s3://hubseq-db/"
 
 def db_insert(tbl, rows):
     response = aws_s3_utils.add_to_json_object(os.path.join(DB_LOC,tbl+".json"), rows)
