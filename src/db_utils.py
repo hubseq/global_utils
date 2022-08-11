@@ -10,3 +10,7 @@ def db_insert(tbl, rows):
     response = aws_s3_utils.add_to_json_object(os.path.join(DB_LOC,tbl+".json"), rows)
     return response
 
+def db_fetch(tbl):
+    response = aws_s3_utils.get_json_object(os.path.join(DB_LOC,tbl+".json"))
+    return response
+
