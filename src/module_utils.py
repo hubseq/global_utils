@@ -640,11 +640,13 @@ def createProgramArguments( module_instance_json, input_working_dir, output_work
         for i in range(0,len(str(input_json['input_prefix']).split(','))):
             # input is a folder
             if input_json['input_type'].lower() == 'folder':
+                print('INPUT FILES TEMP: '+str(input_files_temp))
+                print('INPUT PREFIXES TEMP: '+str(input_prefixes_temp))                
                 pargs_list = insertArgument(pargs_list, \
-                                            [input_json['input_prefix'], \
-                                             file_utils.downloadFolder(file_utils.getFullPath(input_json['input_directory'], input_json['input']), \
+                                            [input_prefixes_temp[i], \
+                                             file_utils.downloadFolder(file_utils.getFullPath(input_json['input_directory'], input_files_temp[i]), \
                                                                     input_working_dir, \
-                                                                    file_utils.inferFileSystem(file_utils.getFullPath(input_json['input_directory'], input_json['input'])), \
+                                                                    file_utils.inferFileSystem(file_utils.getFullPath(input_json['input_directory'], input_files_temp[i])), \
                                                                     mock)], \
                                             input_json['input_position'])
             else: # input_json['input_type'].lower() == 'file':
