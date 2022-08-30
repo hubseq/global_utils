@@ -642,9 +642,9 @@ def createProgramArguments( module_instance_json, input_working_dir, output_work
             if input_json['input_type'].lower() == 'folder':
                 pargs_list = insertArgument(pargs_list, \
                                             [input_json['input_prefix'], \
-                                             file_utils.downloadFolder(file_utils.getFullPath(input_json['input_directory'], input_json['input']), \
+                                             file_utils.downloadFolder(file_utils.getFullPath(input_json['input_directory'], input_files_temp[i]), \
                                                                     input_working_dir, \
-                                                                    file_utils.inferFileSystem(file_utils.getFullPath(input_json['input_directory'], input_json['input'])), \
+                                                                    file_utils.inferFileSystem(file_utils.getFullPath(input_json['input_directory'], input_files_temp[i])), \
                                                                     mock)], \
                                             input_json['input_position'])
             else: # input_json['input_type'].lower() == 'file':
