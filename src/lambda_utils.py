@@ -13,6 +13,8 @@ def getS3path( partialFilePaths, teamid = '', userid = '', useBaseDir = 'false' 
         prepends the S3 bucket name.
         Return full file paths in the same type provided as input.
 
+        useBaseDir - whether or not to use the basedir on an empty string
+    
     >>> lambda_utils.getS3path('hubseq/test/file1.pdf')
     's3://hubtenants/hubseq/test/file1.pdf'
     >>> lambda_utils.getS3path('hubseq/test/file1.pdf,hubseq/file2.txt')
@@ -44,7 +46,7 @@ def getS3path( partialFilePaths, teamid = '', userid = '', useBaseDir = 'false' 
     # create full filepaths
     fullPaths = []
     for f in partialFilePathsList:
-        if not f.startswith('s3://') and useBaseDir.lower() != 'false':
+        if (not f.startswith('s3://') and f not in ['~/','']) or (f in ['~/',''] and useBaseDir.lower() != 'false'):
             fullPaths.append(os.path.join(TEAM_BUCKET, f.lstrip('/')))
         else:
             fullPaths.append(f)
