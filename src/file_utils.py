@@ -684,6 +684,33 @@ def getSampleIDfromFASTQ( f ):
     return f.split('.')[0]
 
 
+def isSequencingFile( f ):
+    """ Determines if a file is a sequencing file by the extension
+    """
+    return isFastqFile(f) or isFastaFile(f) or isAlignFile(f) or isBedFile(f)
+
+def isFastqFile( f ):
+    f = f.lower()
+    return f.endswith('.fastq') or f.endswith('.fastq.gz') or f.endswith('.fq') \
+           or f.endswith('.fq.gz') or f.endswith('.fq.bz2') or f.endswith('.fastq.bz2') \
+           or f.endswith('.fqz')
+
+def isFastaFile( f ):
+    f = f.lower()
+    return f.endswith('.fasta') or f.endswith('.fasta.gz') or f.endswith('.fa') \
+        or f.endswith('.fa.gz') or f.endswith('.fa.bz2') or f.endswith('.fasta.bz2') \
+        or f.endswith('.fqz')
+
+def isAlignFile( f ):
+    f = f.lower()
+    return f.endswith('.sam') or f.endswith('.bam') or f.endswith('.cram')
+
+def isBedFile( f ):
+    f = f.lower()
+    return f.endswith('.bed') or f.endswith('.bed.gz') or f.endswith('.bed.bz2') \
+        or f.endswith('.bigbed') or f.endswith('.bigbed.gz') or f.endswith('.bigbed.bz2') \
+        or f.endswith('.bedgraph') or f.endswith('.bedgraph.gz') or f.endswith('.bedgraph.bz2') \
+
 def inferSampleID( file_name ):
     """ Given a sample file name, infer the sample ID. This won't be perfect but should work 99% of time.
 
@@ -698,8 +725,17 @@ def inferSampleID( file_name ):
     >>> inferSampleID( 'test_L001_S1_R1.fastq.gz')
     'test'
     """
+    # if a list is passed in, we get the first file
+    if type(file_name) == type([]) and file_name != [] and file_name[0] == type(''):
+        file_name = file_name[0].split('/')[-1]
+    elif type(file_name) == type('') and file_name != '':
+        file_name = file_name.split('/')[-1]
+    else:
+        # if an empty string or empty list or non-accepted type is passed in
+        return ''
+        
     f = file_name.split('.')[0]
-    if '.fastq' in file_name or '.fq' in file_name:
+    if isFastqFile(file_name) or isFastaFile(file_name):
         sampleid = getSampleIDfromFASTQ( file_name )
     else:
         sampleid = f

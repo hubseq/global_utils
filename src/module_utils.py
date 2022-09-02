@@ -364,13 +364,13 @@ def createIOJSON( run_args_json ):
     >>> createIOJSON( {'sampleid': 'MYSAMPLE', 'program_name': 'mpileup', 'program_subname': '', 'input': 'my.bam', 'output': 'my.pileup', 'inputdir': 's3://bams', 'outputdir': 's3://pileup', 'alternate_inputs': 's3://fasta/input1.fasta,s3://bed/input2.bed', 'dryrun': ''} )
     {'input': ['s3://bams/my.bam'], 'output': ['s3://pileup/my.pileup'], 'alternate_inputs': ['s3://fasta/input1.fasta', 's3://bed/input2.bed'], 'alternate_outputs': [], 'program_arguments': '', 'sample_id': 'MYSAMPLE', 'dryrun': ''}
     """
-    def inferSampleID( input_file ):
-        sid = ''
-        if type(input_file) == type([]) and input_file != []:
-            sid = input_file[0].split('/')[-1].split('.')[0]
-        elif input_file != [] and input_file != '':
-            sid = input_file.split('/')[-1].split('.')[0]            
-        return sid
+    #def inferSampleID( input_file ):
+    #    sid = ''
+    #    if type(input_file) == type([]) and input_file != []:
+    #        sid = input_file[0].split('/')[-1].split('.')[0]
+    #    elif input_file != [] and input_file != '':
+    #        sid = input_file.split('/')[-1].split('.')[0]            
+    #    return sid
 
     def formatIOFile( io_file, sid ):
         # if no file name is specified, use sample ID
@@ -387,7 +387,7 @@ def createIOJSON( run_args_json ):
         elif 'sample_id' in run_args_json:
             io_json['sample_id'] = run_args_json['sample_id']
         else:
-            io_json['sample_id'] = inferSampleID(run_args_json['input'])
+            io_json['sample_id'] = file_utils.inferSampleID(run_args_json['input'])
         
         input_list = run_args_json['input'].split(',') if type(run_args_json['input']) == str else run_args_json['input']
         input_list_final = []
