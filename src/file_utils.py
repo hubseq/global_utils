@@ -676,6 +676,8 @@ def getSubFilesAll( root_folder, patterns2include = [], patterns2exclude = [], i
 
 def getSampleIDfromFASTQ( f ):
     text2search = ['_L001','_L002','_L003','_L004','_R1','_R2','_I1','_I2','.R1','.R2','.I1','.I2','-R1','-R2','-I1','-I2']
+    for i in range(0,100):  # [bug] if more than 100 samples on a run, then this will bug out
+        text2search = ['_S{}_R1'.format(str(i)),'_S{}_R2'.format(str(i)), '_S{}_I1'.format(str(i)), '_S{}_I2'.format(str(i))] + text2search
     for t in text2search:
         if f.upper().rfind(t) > -1:
             return f[0:f.upper().rfind(t)]
