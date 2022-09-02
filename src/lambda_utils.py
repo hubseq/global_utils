@@ -58,7 +58,7 @@ def getS3path( partialFilePaths, teamid = '', userid = '', useBaseDir = 'false' 
         return fullPaths
     
 
-def getS3path_args( argslist_input ):
+def getS3path_args( argslist_input, teamid = '', userid = '' ):
     """ Takes an arguments list (either space-delimited string or a list) and
         for any paths that are marked with ~/
         replaces with S3 TEAM_BUCKET name.
@@ -66,13 +66,19 @@ def getS3path_args( argslist_input ):
         Special case if we have a string of strings (module_args in run_pipeline)
          - just replace ~/ with S3 TEAM BUCKET name.
 
+        useBaseDir - whether or not to use the basedir on an empty string
+    
     >>> lambda_utils.getS3path_args(['-a','-b','~/test/temp.txt','/blah'])
     ['-a', '-b', 's3://hubtenants/test/temp.txt', '/blah']
     >>> lambda_utils.getS3path_args('-a -b ~/test/temp.txt /blah')
     '-a -b s3://hubtenants/test/temp.txt /blah'
     """
     TEAM_BUCKET = 's3://hubtenants/'
-
+    if teamid != '':
+        TEAM_BUCKET += teamid+'/'
+    if userid != '':
+        TEAM_BUCKET += userid+'/'
+    
     # create list of partial file paths from input
     if type(argslist_input)==type(''):
         return argslist_input.replace('~/',TEAM_BUCKET)
