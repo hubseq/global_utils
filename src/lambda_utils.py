@@ -8,7 +8,7 @@ def getParameter( param_dict, k, v_default ):
     else:
         return v_default
 
-def getS3path( partialFilePaths, teamid = '', userid = '' ):
+def getS3path( partialFilePaths, teamid = '', userid = '', useBaseDir = 'false' ):
     """ Given a list of partial input file paths (comma-separated string or list),
         prepends the S3 bucket name.
         Return full file paths in the same type provided as input.
@@ -44,7 +44,7 @@ def getS3path( partialFilePaths, teamid = '', userid = '' ):
     # create full filepaths
     fullPaths = []
     for f in partialFilePathsList:
-        if not f.startswith('s3://'):
+        if not f.startswith('s3://') and useBaseDir.lower() != 'false':
             fullPaths.append(os.path.join(TEAM_BUCKET, f.lstrip('/')))
         else:
             fullPaths.append(f)
