@@ -8,7 +8,7 @@ def getParameter( param_dict, k, v_default ):
     else:
         return v_default
 
-def getS3path( partialFilePaths ):
+def getS3path( partialFilePaths, teamid = '', userid = '' ):
     """ Given a list of partial input file paths (comma-separated string or list),
         prepends the S3 bucket name.
         Return full file paths in the same type provided as input.
@@ -25,6 +25,10 @@ def getS3path( partialFilePaths ):
     ['s3://hubseq-data/test/file1.pdf', 's3://hubseq-data/test/file2.txt']
     """
     TEAM_BUCKET = 's3://hubtenants/'
+    if teamid != '':
+        TEAM_BUCKET += teamid+'/'
+    if userid != '':
+        TEAM_BUCKET += userid+'/'
 
     # create list of partial file paths from input
     if type(partialFilePaths)==type(''):
