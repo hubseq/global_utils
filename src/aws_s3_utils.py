@@ -458,7 +458,7 @@ def list_objects( s3path, searchpattern = '' ):
     key = str('/'.join(s3path.split('/')[3:])).rstrip('/') + '/'
     region = 'us-west-2'
     # s3_endpoint = '{}.s3.{}.amazonaws.com/{}'.format(bucket,region,key)
-    response = s3_client.list_objects_v2( Bucket=bucket, Prefix=key, Delimiter='/' )
+    response = s3_client.list_objects_v2( Bucket=bucket, Prefix=key, Delimiter='/', StartAfter=key )
     ## narrow down file list if we are searching for a specific file pattern
     if searchpattern != '' and "Contents" in response:
         return _filter_list_objects_response( response, searchpattern )
