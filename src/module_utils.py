@@ -684,17 +684,19 @@ def createProgramArguments( module_instance_json, input_working_dir, output_work
                                         input_json['input_position'])
     
     # add primary output files
-    output_json = mi_json['program_output']
-    # need to handle the case where outputs are such: -1 <OUTPUT1> -2 <OUTPUT2> - in these cases we MUST specify two outputs
-    output_prefixes_temp = output_json['output_prefix'].split(',') if 'output_prefix' in output_json else []
-    output_files_temp = output_json['output'].split(',') if ('output' in output_json and type(output_json['output'])==str) \
-                                                         else (output_json['output'] if ('output' in output_json and type(output_json['output'])==type([])) \
-                                                               else [])
-    for i in range(0,len(output_prefixes_temp)):
-        pargs_list = insertArgument(pargs_list, \
-                                [output_prefixes_temp[i], \
-                                 file_utils.getFullPath(output_working_dir, file_utils.getFileOnly(output_files_temp[i]))], \
-                                output_json['output_position'])
+    output_json = mi_json['program_output'] if 'program_output' in mi_json else {}
+    if output_json != {}:
+        # need to handle the case where outputs are such: -1 <OUTPUT1> -2 <OUTPUT2> - in these cases we MUST specify two outputs
+        output_prefixes_temp = output_json['output_prefix'].split(',') if 'output_prefix' in output_json else []
+        output_files_temp = output_json['output'].split(',') if ('output' in output_json and type(output_json['output'])==str) \
+            else (output_json['output'] if ('output' in output_json and type(output_json['output'])==type([])) \
+                  else [])
+        
+        for i in range(0,len(output_prefixes_temp)):
+            pargs_list = insertArgument(pargs_list, \
+                                        [output_prefixes_temp[i], \
+                                         file_utils.getFullPath(output_working_dir, file_utils.getFileOnly(output_files_temp[i]))], \
+                                        output_json['output_position'])
     
     # add alternate input files
     for alt_input_json in mi_json['alternate_inputs']:
