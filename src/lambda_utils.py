@@ -49,7 +49,7 @@ def getS3path( partialFilePaths, teamid = '', userid = '', useBaseDir = 'false' 
         if (not f.startswith('s3://') and f not in ['~/','',"''",'""']) or (f in ['~/','',"''",'""'] and useBaseDir.lower() != 'false'):
             fullPaths.append(os.path.join(TEAM_BUCKET, f.lstrip('/')))
         elif useBaseDir.lower() == 'false' and f in ['',"''",'""']:
-            fullPaths.append('')
+            fullPaths.append("''")
         else:
             fullPaths.append(f)
 
