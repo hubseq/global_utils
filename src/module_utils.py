@@ -345,6 +345,12 @@ def isDryRun( args_json ):
         return False
     
 
+def removeBlanks( L ):
+    """ Remove empty strings from a list of strings
+    """
+    return [i for i in L if i]
+
+
 def createIOJSON( run_args_json ):
     """ Given run args JSON created by parseRunInput(), creates an IO JSON.
          RUN ARGS JSON:
@@ -420,10 +426,10 @@ def createIOJSON( run_args_json ):
         io_json['output'] = output_list_final
         
         alternate_inputs_list = run_args_json['alternate_inputs'].split(',') if 'alternate_inputs' in run_args_json else []
-        io_json['alternate_inputs'] = alternate_inputs_list
+        io_json['alternate_inputs'] = removeBlanks(alternate_inputs_list)
 
         alternate_outputs_list = run_args_json['alternate_outputs'].split(',') if 'alternate_outputs' in run_args_json else []
-        io_json['alternate_outputs'] = alternate_outputs_list
+        io_json['alternate_outputs'] = removeBlanks(alternate_outputs_list)
         
         io_json['program_arguments'] = run_args_json['pargs'] if ('pargs' in run_args_json and run_args_json['pargs'] not in ['', None]) else ''
         
