@@ -372,9 +372,9 @@ def inferFileType( _fn ):
     >>> inferFileType( ['a/folder', 'blah2.fastq'] )
     ''
     """
-    if type(_fn) == type('') and '.' in _fn:
+    if type(_fn) == type('') and '.' in _fn.split('/')[-1]:
         return _fn.split('.')[-1] if len(list(filter(lambda combo: _fn.upper().endswith(combo), COMBO_FILETYPES))) == 0 else _fn.split('.')[-2]+'.'+_fn.split('.')[-1]
-    elif type(_fn) == type([]) and _fn != [] and '.' in _fn[0]:
+    elif type(_fn) == type([]) and _fn != [] and '.' in _fn[0].split('/')[-1]:
         return _fn[0].split('.')[-1] if len(list(filter(lambda combo: _fn[0].upper().endswith(combo), COMBO_FILETYPES))) == 0 else _fn[0].split('.')[-2]+'.'+_fn[0].split('.')[-1]
     else:
         return ''
