@@ -34,7 +34,7 @@ def getS3path( partialFilePaths, teamid = '', userid = '', useBaseDir = 'false' 
 
     # create list of partial file paths from input
     if type(partialFilePaths)==type(''):
-        partialFilePathsList = partialFilePaths.split(',')
+        partialFilePathsList = partialFilePaths.lstrip("'").lstrip('"').rstrip("'").rstrip('"').split(',')
         returnType = "string"
     elif  type(partialFilePaths)==type([]):
         partialFilePathsList = partialFilePaths
