@@ -46,7 +46,7 @@ def getS3path( partialFilePaths, teamid = '', userid = '', useBaseDir = 'false' 
     # create full filepaths
     fullPaths = []
     for f in partialFilePathsList:
-        if (not f.startswith('s3://') and f not in ['~/','',"''",'""']) or (f in ['~/','',"''",'""'] and useBaseDir.lower() != 'false'):
+        if ('s3://' not in f and f not in ['~/','',"''",'""']) or (f in ['~/','',"''",'""'] and useBaseDir.lower() != 'false'):
             fullPaths.append(os.path.join(TEAM_BUCKET, f.lstrip('/')))
         elif useBaseDir.lower() == 'false' and f in ['',"''",'""']:
             fullPaths.append("''")
