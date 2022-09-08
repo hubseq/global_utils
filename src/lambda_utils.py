@@ -29,8 +29,8 @@ def getS3path( partialFilePaths, teamid = '', userid = '', useBaseDir = 'false' 
     TEAM_BUCKET = 's3://hubtenants/'
     if teamid != '':
         TEAM_BUCKET += teamid+'/'
-    if userid != '':
-        TEAM_BUCKET += userid+'/'
+    # if userid != '':
+    #    TEAM_BUCKET += userid+'/'
 
     # create list of partial file paths from input
     if type(partialFilePaths)==type(''):
