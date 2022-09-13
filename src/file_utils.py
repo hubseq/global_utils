@@ -742,6 +742,11 @@ def inferSampleID( file_name ):
     return sampleid
 
 
+def mergeLists( L1, L2 ):
+    """ Merge two lists
+    """
+    return list(set(L1+L2))
+
 #####################################################
 # FILE LOG AND PIPELINE FUNCTIONS
 #####################################################
