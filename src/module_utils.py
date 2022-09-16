@@ -204,7 +204,7 @@ def getRunArgs( ):
     argparser = ArgumentParser()
     file_path_group = argparser.add_argument_group(title='File arguments')
     file_path_group.add_argument('--module_name', help='name of docker module', required=True)
-    file_path_group.add_argument('--submodule_name', help='name of subprogram in module', required=True)    
+    file_path_group.add_argument('--submodule_name', help='name of subprogram in module', required=False)
     file_path_group.add_argument('--run_arguments', help='path to run_arguments.json', required=True)
     file_path_group.add_argument('--working_dir', help='working data directory for docker run', required=True)
     args = argparser.parse_args()
@@ -800,7 +800,7 @@ def initProgram( ):
     run_arguments_file = file_utils.downloadFile(args.run_arguments, WORKING_DIR)
     run_arguments_json = file_utils.loadJSON( run_arguments_file )
     run_module_name = args.module_name
-    run_submodule_name = args.submodule_name if submodule_name in args else ''
+    run_submodule_name = args.submodule_name if 'submodule_name' in args else ''
     run_job_id = str(args.run_arguments).split('/')[-1].split('.')[1]
     
     # get module template for this docker module
