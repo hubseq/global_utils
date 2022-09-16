@@ -799,10 +799,11 @@ def initProgram( ):
     run_arguments_file = file_utils.downloadFile(args.run_arguments, WORKING_DIR)
     run_arguments_json = file_utils.loadJSON( run_arguments_file )
     run_module_name = args.module_name
+    run_submodule_name = args.submodule_name if submodule_name in args else ''
     run_job_id = str(args.run_arguments).split('/')[-1].split('.')[1]
     
     # get module template for this docker module
-    module_template_path = getModuleTemplate( args.module_name )
+    module_template_path = getModuleTemplate( args.module_name, run_submodule_name )
     module_template_file = file_utils.downloadFile( module_template_path, WORKING_DIR )
     module_template_json = file_utils.loadJSON( module_template_file )
     
@@ -817,7 +818,8 @@ def initProgram( ):
     local_output_file = file_utils.getFullPath(OUT_DIR, remote_output_file, True)    
     program_arguments = createProgramArguments( module_instance_json, WORKING_DIR, OUT_DIR )  # files will be downloaded here
     
-    run_json = {'module': run_module_name, 'run_job_id': run_job_id, 'docker_entry_dir': DOCKER_DIR, \
+    run_json = {'module': run_module_name, 'submodule': run_submodule_name, \
+                'run_job_id': run_job_id, 'docker_entry_dir': DOCKER_DIR, \
                 'local_input_dir': WORKING_DIR, 'local_output_dir': OUT_DIR, \
                 'remote_input_dir': remote_input_directory, 'remote_output_dir': remote_output_directory, \
                 'local_input_file': local_input_file, 'local_output_file': local_output_file, \
