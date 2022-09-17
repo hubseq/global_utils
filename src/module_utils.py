@@ -204,7 +204,7 @@ def getRunArgs( ):
     argparser = ArgumentParser()
     file_path_group = argparser.add_argument_group(title='File arguments')
     file_path_group.add_argument('--module_name', help='name of docker module', required=True)
-    file_path_group.add_argument('--submodule_name', help='name of subprogram in module', required=False)
+    file_path_group.add_argument('--submodule_name', help='name of subprogram in module', required=False, default='')
     file_path_group.add_argument('--run_arguments', help='path to run_arguments.json', required=True)
     file_path_group.add_argument('--working_dir', help='working data directory for docker run', required=True)
     args = argparser.parse_args()
