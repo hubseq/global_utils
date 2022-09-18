@@ -29,7 +29,7 @@ def add_image_to_html( p, p_type, t = '' ):
         encoded = base64.b64encode(imgfile.getvalue()).decode('utf-8')
         img_tag += '<img src=\'data:image/png;base64,{}\'>'.format(encoded) + '<br>'
     else: # pure image
-        encoded = base64.b64encode(p.getvalue()).decode('utf-8')
+        encoded = base64.b64encode(open(p, 'rb').read()).decode('utf-8')
         img_tag += '<img src=\'data:image/png;base64,{}\'>'.format(encoded) + '<br>'        
     return img_tag
 
