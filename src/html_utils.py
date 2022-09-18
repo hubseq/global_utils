@@ -30,7 +30,7 @@ def add_image_to_html( p, p_type, t = '' ):
         img_tag += '<img src=\'data:image/png;base64,{}\'>'.format(encoded) + '<br>'
     else: # pure image
         encoded = base64.b64encode(p.getvalue()).decode('utf-8')
-        img_tag += '<img src={}><br>'.format(p)
+        img_tag += '<img src=\'data:image/png;base64,{}\'>'.format(encoded) + '<br>'        
     return img_tag
 
 
@@ -41,7 +41,7 @@ def plots_to_html( plots_object_list, html_outname ):
     img_tags = ''
     with open(html_outname,'w') as f:
         for p_tuple in plots_object_list:
-            img_tags += add_image_to_html( p_tuple[0], p_tuple[1] )
+            img_tags += add_image_to_html( p_tuple[0], p_tuple[1], p_tuple[2] if len(p_tuple) > 2 else '' )
     html = '<html><body>' + img_tags + '</body></html>'
     with open( html_outname, 'w' ) as f:
         f.write(html)
