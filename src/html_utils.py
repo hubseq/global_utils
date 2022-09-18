@@ -1,7 +1,7 @@
 import os, sys
-import plotly.express as px
-import plotly.figure_factory as ff
-import matplotlib.pyplot as plt
+#import plotly.express as px
+#import plotly.figure_factory as ff
+#import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
 
