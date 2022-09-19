@@ -970,6 +970,7 @@ def groupInputFilesBySample( input_files_list ):
       /dir/*  gets all files in a dir
       /dir/^fastq  gets all files that end with FASTQ
       /dir/sample^  gets all files that start with sample
+      /dir/** gets sampleid from file names in dir but keeps input files as the enclosing folder (not the individual files in folder)
     """
     # getSubFiles( root_folder, patterns2include = [], patterns2exclude = [] ):
     groups = {}
@@ -987,6 +988,9 @@ def groupInputFilesBySample( input_files_list ):
             for f in files:
                 sampleid = inferSampleID( getFileOnly(f) )
                 groups[sampleid] = groups[sampleid] + [f] if sampleid in groups else [f]
+            # unique case of keeping file list as the enclosing folder - **
+            if input_file.endswith('**'):
+                groups[sampleid] = [input_file.rstrip('*')]
         # otherwise we have a list of individual files
         else:
             sampleid = inferSampleID( getFileOnly(input_file) )
