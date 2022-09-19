@@ -800,7 +800,7 @@ def initProgram( ):
     run_arguments_file = file_utils.downloadFile(args.run_arguments, WORKING_DIR)
     run_arguments_json = file_utils.loadJSON( run_arguments_file )
     run_module_name = args.module_name
-    run_submodule_name = args.submodule_name if 'submodule_name' in args and args['submodule_name'] not in [[], '', None] else ''
+    run_submodule_name = args.submodule_name if 'submodule_name' in args and args.submodule_name not in [[], '', None] else ''
     run_job_id = str(args.run_arguments).split('/')[-1].split('.')[1]
     
     # get module template for this docker module
