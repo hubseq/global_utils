@@ -964,7 +964,7 @@ def getRunIds( root_folder, teamid, userid, pipelineid):
     # return getPipelineJSON_RunIds( pipeline_json )
 
 
-def groupInputFilesBySample( input_files_list ):
+def groupInputFilesBySample( input_files_list, samplelist = [] ):
     """ Groups all input files according to the full path and sample ID embedded in the names of the input files.
     Input can also be directories with the following syntax:
       /dir/*  gets all files in a dir
@@ -976,6 +976,7 @@ def groupInputFilesBySample( input_files_list ):
     groups = {}
     print('INPUT FILES LIST: '+str(input_files_list))
     for input_file in input_files_list:
+        idx = input_files_list.index(input_file)
         # if we are looking within a whole directory
         if '*' in input_file or '^' in input_file:
             # get files that match the pattern we are looking for
@@ -986,14 +987,14 @@ def groupInputFilesBySample( input_files_list ):
             print('SUBFILES: '+str(files))
             # group those files
             for f in files:
-                sampleid = inferSampleID( getFileOnly(f) )
+                sampleid = inferSampleID( getFileOnly(f) ) if samplelist == [] else samplelist[idx]
                 groups[sampleid] = groups[sampleid] + [f] if sampleid in groups else [f]
             # unique case of keeping file list as the enclosing folder - **
             if input_file.endswith('**'):
                 groups[sampleid] = [input_file.rstrip('*')]
         # otherwise we have a list of individual files
         else:
-            sampleid = inferSampleID( getFileOnly(input_file) )
+            sampleid = inferSampleID( getFileOnly(input_file) ) if samplelist == []  else samplelist[idx]
             groups[sampleid] = groups[sampleid] + [input_file] if sampleid in groups else [input_file]
     print('GROUPS: '+str(groups))
     return groups
