@@ -277,7 +277,7 @@ def listSubFiles(s3_path, patterns2include, patterns2exclude):
         s3_path = s3_path[0]
     elif type(s3_path) == type([]) and s3_path == []:
         s3_path = ''
-    
+
     cmd = 'aws s3 ls %s' % (s3_path.rstrip('/')+'/')
     dfiles = []
     uid = str(uuid.uuid4())[0:6]  # prevents race conditions on tmp file
@@ -372,7 +372,7 @@ def edit_json_object( s3path, pairs2search, pairs2update ):
     bucket = s3path.split('/')[2]
     key = '/'.join(s3path.split('/')[3:])
     # current JSON data in object
-    json_data = get_json_object( s3path )[0]    
+    json_data = get_json_object( s3path )[0]
     for i in range(0,len(pairs2search)):
         pair = pairs2search[i]
         k2search = list(pair.keys())[0]
@@ -385,9 +385,9 @@ def edit_json_object( s3path, pairs2search, pairs2update ):
             json_entry = json_data[j]
             if k2search in json_entry and json_entry[k2search]==v2search:
                 json_data[j][k2replace] = v2replace
-                break    
+                break
     response = s3_client.put_object( Body=json.dumps(json_data).encode(), Bucket=bucket, Key=key )
-    return response    
+    return response
 
 
 def add_to_json_object( s3path, newpairs ):
@@ -409,7 +409,6 @@ def add_to_json_object( s3path, newpairs ):
         for k, v in newpairs.items():
             if k not in json_data:
                 json_data[k] = v
-    
     response = s3_client.put_object( Body=json.dumps(json_data).encode(), Bucket=bucket, Key=key )
     return response
 
@@ -429,13 +428,13 @@ def _filter_list_objects_response( response, search_pattern ):
 
 def list_objects( s3path, searchpattern = '' ):
     """ List objects in an S3 object path. Returns a JSON response with format:
-      {'ResponseMetadata': 
+      {'ResponseMetadata':
          {'RequestId': ...,
           'HostId': ...
           'HTTPStatusCode': 200,
           'HTTPHeaders': ...
           'IsTruncated': False,
-          'Contents': 
+          'Contents':
             [{'Key': '<filename>' 'LastModified': ...', 'Size': '...'...},
              {'Key': '...
             ]
@@ -465,7 +464,58 @@ def list_objects( s3path, searchpattern = '' ):
     else:
         return response
 
-def list_objects_nested( s3path, searchpattern ):
+def list_objects_nested_create_full_path ( s3path, contents ):
+    """A helper funciton to create a full s3 file path for files in contents.
+    >>> contents1 = [{'Key': 'hubseq/jira.pdf'}]
+    >>> list_objects_nested_create_full_path( 's3://hubtenants/test/hubseq', contents1 )
+    >>> contents1
+    [{'Key': 's3://hubtenants/test/hubseq/jira.pdf'}]
+
+    >>> contents2 = [{'Key': 'hubseq/jira.pdf'}]
+    >>> list_objects_nested_create_full_path('s3://hubtenants/test/hubseq', contents2 )
+    >>> contents2
+    [{'Key': 's3://hubtenants/test/hubseq/jira.pdf'}]
+    """
+    for content in contents:
+        if "Key" in content:
+            content_split = content["Key"].split('/')
+            if len(content_split) < 1:
+                continue
+            else:
+                content["Key"] = s3path.rstrip("/") + "/" + content_split[-1]
+
+def list_objects_nested_recursion ( s3path, files, searchpattern = '' ):
+    """A recursive helper function for list_objects_nested.
+    >>> files1 = []
+    >>> list_objects_nested_recursion( 's3://hubseq-db/test/', files1 )
+    >>> files1
+    [{'Key': 's3://hubseq-db/test/jobs.json', 'LastModified': datetime.datetime(2022, 9, 20, 16, 55, 34, tzinfo=tzutc()), 'ETag': '"2e1a522f29bae612f3d4378fc09d3a3d"', 'Size': 45513, 'StorageClass': 'STANDARD'}, {'Key': 's3://hubseq-db/test/runs.json', 'LastModified': datetime.datetime(2022, 9, 20, 16, 55, 34, tzinfo=tzutc()), 'ETag': '"86c1b4b81a7617c4d4faf9426391337e"', 'Size': 5467, 'StorageClass': 'STANDARD'}]
+    """
+    # base case: s3path is invalid
+    s3path_split = s3path.split('/')
+    if len(s3path_split) < 3:
+        return
+    bucket = s3path_split[2]
+    key = str('/'.join(s3path_split[3:])).rstrip('/') + '/'
+    if key == '/':
+        key = ''
+    region = 'us-west-2'
+    response = s3_client.list_objects_v2( Bucket=bucket, Prefix=key, Delimiter='/', StartAfter=key )
+    if "Contents" in response:
+        if searchpattern != '':
+            matched_contents = _filter_list_objects_response( response, searchpattern )
+            if "Contents" in matched_contents:
+                list_objects_nested_create_full_path( s3path, matched_contents["Contents"] )
+                files.extend(matched_contents["Contents"])
+        else:
+            list_objects_nested_create_full_path( s3path, response["Contents"] )
+            files.extend(response["Contents"])
+    if "CommonPrefixes" in response:
+        for prefix in response["CommonPrefixes"]:
+            list_objects_nested_recursion( s3path.rstrip('/') + "/" + prefix["Prefix"], files, searchpattern )
+
+
+def list_objects_nested( s3path, searchpattern = '' ):
     """ Similar to list_objects but will list objects in nested subfolders
     Nested subfolders are found in the "CommonPrefixes" key:
     {
@@ -478,9 +528,14 @@ def list_objects_nested( s3path, searchpattern ):
         },...
         ]
     }
+    >>> list_objects_nested( 's3://hubseq-db/test/' )
+    {'Contents': [{'Key': 's3://hubseq-db/test/jobs.json', 'LastModified': datetime.datetime(2022, 9, 20, 16, 55, 34, tzinfo=tzutc()), 'ETag': '"2e1a522f29bae612f3d4378fc09d3a3d"', 'Size': 45513, 'StorageClass': 'STANDARD'}, {'Key': 's3://hubseq-db/test/runs.json', 'LastModified': datetime.datetime(2022, 9, 20, 16, 55, 34, tzinfo=tzutc()), 'ETag': '"86c1b4b81a7617c4d4faf9426391337e"', 'Size': 5467, 'StorageClass': 'STANDARD'}]}
+    >>> list_objects_nested( 's3://hubtest/' )
+    {'Contents': [{'Key': 's3://hubtest/jira.pdf', 'LastModified': datetime.datetime(2022, 9, 26, 3, 16, 28, tzinfo=tzutc()), 'ETag': '"46213a6178ac104ba811cc5bb0133218"', 'Size': 159226, 'StorageClass': 'STANDARD'}, {'Key': 's3://hubtest/temp/testupload.temp.txt', 'LastModified': datetime.datetime(2022, 9, 26, 3, 16, 48, tzinfo=tzutc()), 'ETag': '"e3b30b2092690531087cedb70513bb29"', 'Size': 21, 'StorageClass': 'STANDARD'}, {'Key': 's3://hubtest/temp/testuser1.temp.txt', 'LastModified': datetime.datetime(2022, 9, 26, 3, 16, 57, tzinfo=tzutc()), 'ETag': '"0fdc79273d7d1908f90cc05372e4338a"', 'Size': 19, 'StorageClass': 'STANDARD'}]}
     """
-    
-    return
+    files = { "Contents": [] }
+    list_objects_nested_recursion( s3path, files["Contents"], searchpattern )
+    return files
 
 def get_metadata( s3paths ):
     """ Gets metadata for objects (files or folders) at the given S3 paths (string-list)
@@ -518,7 +573,7 @@ def set_metadata( s3paths, tags_dict, overwrite = 'True' ):
             if k == t['Key']:
                 return t
         return {}
-    
+
     tag_sets = []
     s3paths_list = s3paths.split(',')
     for s3path in s3paths_list:
@@ -540,9 +595,9 @@ def set_metadata( s3paths, tags_dict, overwrite = 'True' ):
         response = s3_client.put_object_tagging(Bucket=bucket,Key=key, Tagging={'TagSet': tag_set})
         tag_sets.append(tag_set)
     return tag_sets
-    
+
 def dateConverter(json_object):
-    """ AWS response objects often contain datetime objects. 
+    """ AWS response objects often contain datetime objects.
     For proper JSON stringify, need to convert these datetime objects to string date format.
     """
     if isinstance(json_object, datetime.datetime):
