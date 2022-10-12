@@ -839,3 +839,15 @@ def logRun( run_json, output_folder ):
     return
 
         
+def formatModules( mlist ):
+    """ Format list of modules
+    """
+    mod = ['bcl2fastq', 'bowtie2', 'bwamem', 'cellranger', 'cutadapt', 'david_go', 'deseq2', 'fastqc', 'homer', 'macs2',
+           'qorts', 'mileup', 'rnaseqc', 'seurat', 'varscan2']
+    mlist_new = []
+    for m in mlist:
+        if m in mod:
+            mlist_new.append(m+'_saas')
+        else:
+            mlist_new.append(m)
+    return mlist_new
